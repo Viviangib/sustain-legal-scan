@@ -103,10 +103,6 @@ const Analysis = () => {
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Dashboard
           </Link>
-          <h1 className="text-3xl font-bold mb-2">Sustainability Framework Analysis</h1>
-          <p className="text-muted-foreground">
-            Analyze your sustainability framework against legal requirements
-          </p>
         </div>
 
         {/* Progress Steps */}
