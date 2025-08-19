@@ -237,7 +237,7 @@ export function UploadStep({ onNext, onDataUpdate }: UploadStepProps) {
 
       <Card>
         <CardHeader>
-          <CardTitle>Upload Sustainability Framework Document</CardTitle>
+          <CardTitle>Upload Sustainability Framework Document *</CardTitle>
           <CardDescription>
             Upload your sustainability framework document (PDF, Word, Excel, or text file). Max size: 10MB.
           </CardDescription>
