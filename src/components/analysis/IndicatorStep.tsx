@@ -1,10 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
-import { Lightbulb, RefreshCw, CheckCircle } from 'lucide-react';
+import { Lightbulb, Loader2 } from 'lucide-react';
 import { AnalysisData } from '@/pages/Analysis';
 
 interface IndicatorStepProps {
@@ -16,7 +15,6 @@ interface IndicatorStepProps {
 export function IndicatorStep({ onNext, onDataUpdate, data }: IndicatorStepProps) {
   const [indicators, setIndicators] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
-  const [extracting, setExtracting] = useState(false);
   const { toast } = useToast();
 
   const extractIndicators = async () => {
@@ -29,72 +27,45 @@ export function IndicatorStep({ onNext, onDataUpdate, data }: IndicatorStepProps
       return;
     }
 
-    setExtracting(true);
-    
-    // TODO: Replace with your actual FAST API endpoint
-    const apiEndpoint = 'YOUR_FAST_API_ENDPOINT/extract-indicators';
+    setLoading(true);
     
     try {
-      // Simulate API call for now
-      setTimeout(() => {
-        const mockIndicators = [
-          'GHG emissions reduction targets',
-          'Water consumption monitoring',
-          'Waste management practices',
-          'Employee diversity metrics',
-          'Supply chain sustainability',
-          'Energy efficiency measures',
-          'Biodiversity conservation efforts',
-          'Community engagement programs',
-          'Governance transparency',
-          'Risk management framework'
-        ];
-        
-        setIndicators(mockIndicators);
-        onDataUpdate({ indicators: mockIndicators });
-        setExtracting(false);
-        
-        toast({
-          title: "Indicators extracted",
-          description: `Found ${mockIndicators.length} sustainability indicators in your document.`,
-        });
-      }, 3000);
+      // TODO: Replace with your FAST API endpoint
+      // const response = await fetch('YOUR_FAST_API_ENDPOINT/extract-indicators', {
+      //   method: 'POST',
+      //   headers: { 'Content-Type': 'application/json' },
+      //   body: JSON.stringify({
+      //     document_id: data.document.id,
+      //     storage_path: data.document.storage_path
+      //   }),
+      // });
+      // const result = await response.json();
 
-      // Actual API call would look like this:
-      /*
-      const response = await fetch(apiEndpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          document_id: data.document.id,
-          storage_path: data.document.storage_path
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to extract indicators');
-      }
-
-      const result = await response.json();
-      setIndicators(result.indicators);
-      onDataUpdate({ indicators: result.indicators });
+      // Mock indicators for demo
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      const mockIndicators = [
+        'GHG emissions reduction targets',
+        'Water consumption monitoring',
+        'Waste management practices',
+        'Employee diversity metrics',
+        'Supply chain sustainability'
+      ];
+      
+      setIndicators(mockIndicators);
+      onDataUpdate({ indicators: mockIndicators });
       
       toast({
         title: "Indicators extracted",
-        description: `Found ${result.indicators.length} sustainability indicators in your document.`,
+        description: `Found ${mockIndicators.length} sustainability indicators.`,
       });
-      */
     } catch (error: any) {
-      console.error('Indicator extraction error:', error);
       toast({
         variant: "destructive",
         title: "Extraction failed",
-        description: error.message || "There was an error extracting indicators from your document.",
+        description: error.message || "Failed to extract indicators.",
       });
     } finally {
-      setExtracting(false);
+      setLoading(false);
     }
   };
 
@@ -102,81 +73,61 @@ export function IndicatorStep({ onNext, onDataUpdate, data }: IndicatorStepProps
     if (indicators.length === 0) {
       toast({
         variant: "destructive",
-        title: "No indicators found",
-        description: "Please extract indicators first before continuing.",
+        title: "No indicators",
+        description: "Please extract indicators first.",
       });
       return;
     }
-    
     onNext();
   };
 
-  useEffect(() => {
-    // Auto-extract indicators when component mounts
-    extractIndicators();
-  }, []);
-
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <Lightbulb className="h-5 w-5" />
-            <span>Sustainability Indicators</span>
-          </CardTitle>
-          <CardDescription>
-            AI-powered extraction of sustainability indicators from your document
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {extracting ? (
-            <div className="space-y-4">
-              <div className="flex items-center space-x-2 text-primary">
-                <RefreshCw className="h-4 w-4 animate-spin" />
-                <span>Extracting indicators from your document...</span>
-              </div>
-              <div className="space-y-2">
-                {[...Array(5)].map((_, i) => (
-                  <Skeleton key={i} className="h-8 w-full" />
-                ))}
-              </div>
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center space-x-2">
+          <Lightbulb className="h-5 w-5" />
+          <span>Extract Sustainability Indicators</span>
+        </CardTitle>
+        <CardDescription>
+          Extract sustainability indicators from your document using AI
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {indicators.length === 0 ? (
+          <div className="text-center py-8">
+            <Button onClick={extractIndicators} disabled={loading}>
+              {loading ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Extracting...
+                </>
+              ) : (
+                <>
+                  <Lightbulb className="h-4 w-4 mr-2" />
+                  Extract Indicators
+                </>
+              )}
+            </Button>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <p className="text-sm text-green-600">✓ Found {indicators.length} indicators</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+              {indicators.map((indicator, index) => (
+                <Badge key={index} variant="secondary" className="p-2 text-sm">
+                  {indicator}
+                </Badge>
+              ))}
             </div>
-          ) : indicators.length > 0 ? (
-            <div className="space-y-4">
-              <div className="flex items-center space-x-2 text-green-600">
-                <CheckCircle className="h-4 w-4" />
-                <span>Successfully extracted {indicators.length} indicators</span>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {indicators.map((indicator, index) => (
-                  <Badge key={index} variant="secondary" className="p-3 justify-start text-sm">
-                    {indicator}
-                  </Badge>
-                ))}
-              </div>
-              
-              <div className="flex space-x-3">
-                <Button variant="outline" onClick={extractIndicators} disabled={extracting}>
-                  <RefreshCw className="h-4 w-4 mr-2" />
-                  Re-extract
-                </Button>
-                <Button onClick={handleContinue}>
-                  Continue with These Indicators
-                </Button>
-              </div>
-            </div>
-          ) : (
-            <div className="text-center py-8">
-              <p className="text-muted-foreground mb-4">No indicators extracted yet</p>
-              <Button onClick={extractIndicators} disabled={extracting}>
-                <Lightbulb className="h-4 w-4 mr-2" />
-                Extract Indicators
+            <div className="flex justify-end space-x-2">
+              <Button variant="outline" onClick={extractIndicators} disabled={loading}>
+                Re-extract
               </Button>
+              <Button onClick={handleContinue}>Continue</Button>
             </div>
-          )}
-        </CardContent>
-      </Card>
-    </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }
