@@ -75,6 +75,33 @@ export function UploadStep({ onNext, onDataUpdate }: UploadStepProps) {
       return;
     }
 
+    if (!version.trim()) {
+      toast({
+        variant: "destructive",
+        title: "Version required",
+        description: "Please enter a version.",
+      });
+      return;
+    }
+
+    if (!publicationTime.trim()) {
+      toast({
+        variant: "destructive",
+        title: "Publication time required",
+        description: "Please enter a publication time.",
+      });
+      return;
+    }
+
+    if (!organization.trim()) {
+      toast({
+        variant: "destructive",
+        title: "Organization required",
+        description: "Please enter a standard-setting organization.",
+      });
+      return;
+    }
+
     if (!selectedFile) {
       toast({
         variant: "destructive",
@@ -179,7 +206,7 @@ export function UploadStep({ onNext, onDataUpdate }: UploadStepProps) {
             />
           </div>
           <div>
-            <Label htmlFor="version">Version</Label>
+            <Label htmlFor="version">Version *</Label>
             <Input
               id="version"
               placeholder="e.g., 1.0"
@@ -188,7 +215,7 @@ export function UploadStep({ onNext, onDataUpdate }: UploadStepProps) {
             />
           </div>
           <div>
-            <Label htmlFor="publicationTime">Publication Time</Label>
+            <Label htmlFor="publicationTime">Publication Time *</Label>
             <Input
               id="publicationTime"
               placeholder="e.g., November 2024"
@@ -197,7 +224,7 @@ export function UploadStep({ onNext, onDataUpdate }: UploadStepProps) {
             />
           </div>
           <div>
-            <Label htmlFor="organization">Standard-Setting Organization</Label>
+            <Label htmlFor="organization">Standard-Setting Organization *</Label>
             <Input
               id="organization"
               placeholder="e.g., Global Infrastructure Basel Foundation"
