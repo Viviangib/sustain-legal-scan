@@ -163,17 +163,17 @@ export function UploadStep({ onNext, onDataUpdate }: UploadStepProps) {
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>Framework Information</CardTitle>
+          <CardTitle>Sustainability Framework</CardTitle>
           <CardDescription>
             Provide basic information of your sustainability framework
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <Label htmlFor="frameworkName">Framework Name *</Label>
+            <Label htmlFor="frameworkName">Name *</Label>
             <Input
               id="frameworkName"
-              placeholder="e.g., SASB Standards"
+              placeholder="e.g., FAST-Infra Label"
               value={frameworkName}
               onChange={(e) => setFrameworkName(e.target.value)}
             />
@@ -200,7 +200,7 @@ export function UploadStep({ onNext, onDataUpdate }: UploadStepProps) {
             <Label htmlFor="organization">Standard-Setting Organization</Label>
             <Input
               id="organization"
-              placeholder="e.g., SASB Foundation"
+              placeholder="e.g., Global Infrastructure Basel Foundation"
               value={organization}
               onChange={(e) => setOrganization(e.target.value)}
             />
