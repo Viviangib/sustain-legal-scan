@@ -27,7 +27,7 @@ export function Navbar() {
           </div>
           <div>
             <h1 className="text-xl font-bold">Sustainability Framework Benchmarking</h1>
-            <p className="text-sm text-muted-foreground">AI-Powered Benchmarking Analysis for Sustainability Frameworks against Legal Requirements with AI-Powered Insights</p>
+            <p className="text-sm text-muted-foreground">AI-Powered Benchmarking Analysis for Sustainability Frameworks against Legal Requirements</p>
           </div>
         </div>
 
