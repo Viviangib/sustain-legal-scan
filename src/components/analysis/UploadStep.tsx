@@ -182,7 +182,7 @@ export function UploadStep({ onNext, onDataUpdate }: UploadStepProps) {
             <Label htmlFor="version">Version</Label>
             <Input
               id="version"
-              placeholder="e.g., 2.1"
+              placeholder="e.g., 1.0"
               value={version}
               onChange={(e) => setVersion(e.target.value)}
             />
