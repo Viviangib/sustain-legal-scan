@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -17,10 +18,12 @@ export function DashboardOverview() {
     <div className="space-y-6">
       {/* Welcome Section */}
       <div className="bg-gradient-to-r from-primary/10 to-accent/10 rounded-lg p-6">
-        <Button onClick={() => console.log('Starting new analysis...')}>
-          <Plus className="mr-2 h-4 w-4" />
-          Start New Analysis
-        </Button>
+        <Link to="/analysis">
+          <Button>
+            <Plus className="mr-2 h-4 w-4" />
+            Start New Analysis
+          </Button>
+        </Link>
       </div>
 
       {/* Stats Cards */}
