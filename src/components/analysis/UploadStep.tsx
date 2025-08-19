@@ -16,8 +16,10 @@ interface UploadStepProps {
 }
 
 export function UploadStep({ onNext, onDataUpdate }: UploadStepProps) {
-  const [projectName, setProjectName] = useState('');
-  const [projectDescription, setProjectDescription] = useState('');
+  const [frameworkName, setFrameworkName] = useState('');
+  const [version, setVersion] = useState('');
+  const [publicationTime, setPublicationTime] = useState('');
+  const [organization, setOrganization] = useState('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const { user } = useAuth();
@@ -64,11 +66,11 @@ export function UploadStep({ onNext, onDataUpdate }: UploadStepProps) {
   };
 
   const handleSubmit = async () => {
-    if (!projectName.trim()) {
+    if (!frameworkName.trim()) {
       toast({
         variant: "destructive",
-        title: "Project name required",
-        description: "Please enter a project name.",
+        title: "Framework name required",
+        description: "Please enter a framework name.",
       });
       return;
     }
@@ -98,8 +100,8 @@ export function UploadStep({ onNext, onDataUpdate }: UploadStepProps) {
       const { data: project, error: projectError } = await supabase
         .from('projects')
         .insert({
-          name: projectName,
-          description: projectDescription,
+          name: frameworkName,
+          description: `Framework: ${frameworkName} | Version: ${version} | Published: ${publicationTime} | Organization: ${organization}`,
           user_id: user.id,
           status: 'draft'
         })
@@ -161,28 +163,46 @@ export function UploadStep({ onNext, onDataUpdate }: UploadStepProps) {
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>Project Information</CardTitle>
+          <CardTitle>Framework Information</CardTitle>
           <CardDescription>
-            Provide a name and description for your analysis project
+            Provide basic information of your sustainability framework
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <Label htmlFor="projectName">Project Name *</Label>
+            <Label htmlFor="frameworkName">Framework Name *</Label>
             <Input
-              id="projectName"
-              placeholder="e.g., Q1 2024 Sustainability Analysis"
-              value={projectName}
-              onChange={(e) => setProjectName(e.target.value)}
+              id="frameworkName"
+              placeholder="e.g., SASB Standards"
+              value={frameworkName}
+              onChange={(e) => setFrameworkName(e.target.value)}
             />
           </div>
           <div>
-            <Label htmlFor="projectDescription">Description (Optional)</Label>
-            <Textarea
-              id="projectDescription"
-              placeholder="Brief description of your analysis project..."
-              value={projectDescription}
-              onChange={(e) => setProjectDescription(e.target.value)}
+            <Label htmlFor="version">Version</Label>
+            <Input
+              id="version"
+              placeholder="e.g., 2.1"
+              value={version}
+              onChange={(e) => setVersion(e.target.value)}
+            />
+          </div>
+          <div>
+            <Label htmlFor="publicationTime">Publication Time</Label>
+            <Input
+              id="publicationTime"
+              placeholder="e.g., November 2024"
+              value={publicationTime}
+              onChange={(e) => setPublicationTime(e.target.value)}
+            />
+          </div>
+          <div>
+            <Label htmlFor="organization">Standard-Setting Organization</Label>
+            <Input
+              id="organization"
+              placeholder="e.g., SASB Foundation"
+              value={organization}
+              onChange={(e) => setOrganization(e.target.value)}
             />
           </div>
         </CardContent>
