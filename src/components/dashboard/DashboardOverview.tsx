@@ -17,7 +17,7 @@ export function DashboardOverview() {
     <div className="space-y-6">
       {/* Welcome Section */}
       <div className="bg-gradient-to-r from-primary/10 to-accent/10 rounded-lg p-6">
-        <Button>
+        <Button onClick={() => console.log('Starting new analysis...')}>
           <Plus className="mr-2 h-4 w-4" />
           Start New Analysis
         </Button>
