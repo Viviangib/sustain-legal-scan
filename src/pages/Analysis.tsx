@@ -17,7 +17,7 @@ import {
   ArrowLeft
 } from 'lucide-react';
 import { UploadStep } from '@/components/analysis/UploadStep';
-import { IndicatorStep } from '@/components/analysis/IndicatorStep';
+import { UploadSupportingDocumentsStep } from '@/components/analysis/UploadSupportingDocumentsStep';
 import { FrameworkStep } from '@/components/analysis/FrameworkStep';
 import { AnalysisStep } from '@/components/analysis/AnalysisStep';
 import { ResultsStep } from '@/components/analysis/ResultsStep';
@@ -26,14 +26,14 @@ import { Link } from 'react-router-dom';
 export type AnalysisData = {
   project: any;
   document: any;
-  indicators: string[];
+  supportingDocuments: any[];
   legalFramework: any;
   analysisResults: any;
 };
 
 const steps = [
   { id: 1, name: 'Upload Document', icon: Upload, status: 'current' },
-  { id: 2, name: 'Extract Indicators', icon: FileText, status: 'upcoming' },
+  { id: 2, name: 'Upload Supporting Documents', icon: FileText, status: 'upcoming' },
   { id: 3, name: 'Select Framework', icon: Settings, status: 'upcoming' },
   { id: 4, name: 'AI Analysis', icon: BarChart3, status: 'upcoming' },
   { id: 5, name: 'View Results', icon: Download, status: 'upcoming' },
@@ -45,7 +45,7 @@ const Analysis = () => {
   const [analysisData, setAnalysisData] = useState<AnalysisData>({
     project: null,
     document: null,
-    indicators: [],
+    supportingDocuments: [],
     legalFramework: null,
     analysisResults: null,
   });
@@ -65,7 +65,7 @@ const Analysis = () => {
     setAnalysisData({
       project: null,
       document: null,
-      indicators: [],
+      supportingDocuments: [],
       legalFramework: null,
       analysisResults: null,
     });
@@ -102,7 +102,7 @@ const Analysis = () => {
       case 1:
         return <UploadStep onNext={nextStep} onDataUpdate={updateAnalysisData} />;
       case 2:
-        return <IndicatorStep onNext={nextStep} onDataUpdate={updateAnalysisData} data={analysisData} />;
+        return <UploadSupportingDocumentsStep onNext={nextStep} onDataUpdate={updateAnalysisData} data={analysisData} />;
       case 3:
         return <FrameworkStep onNext={nextStep} onDataUpdate={updateAnalysisData} />;
       case 4:

@@ -22,7 +22,7 @@ export function AnalysisStep({ onNext, onDataUpdate, data }: AnalysisStepProps) 
   const { toast } = useToast();
 
   const runAnalysis = async () => {
-    if (!data.project || !data.document || !data.legalFramework || !data.indicators.length) {
+    if (!data.project || !data.document || !data.legalFramework) {
       toast({
         variant: "destructive",
         title: "Missing data",
@@ -45,7 +45,7 @@ export function AnalysisStep({ onNext, onDataUpdate, data }: AnalysisStepProps) 
           analysis_status: 'processing',
           input_parameters: {
             legal_framework_id: data.legalFramework.id,
-            indicators: data.indicators,
+            supporting_documents: data.supportingDocuments?.length || 0,
             document_id: data.document.id
           }
         })
@@ -77,12 +77,13 @@ export function AnalysisStep({ onNext, onDataUpdate, data }: AnalysisStepProps) 
       const mockResults = {
         compliance_score: 78.5,
         results: {
-          total_indicators: data.indicators.length,
-          compliant_indicators: Math.floor(data.indicators.length * 0.785),
-          gaps_identified: Math.ceil(data.indicators.length * 0.215),
-          critical_gaps: 3
+          total_indicators: 15,
+          compliant_indicators: 12,
+          gaps_identified: 3,
+          critical_gaps: 1,
+          supporting_documents_processed: data.supportingDocuments?.length || 0
         },
-        recommendations: 'Key improvement areas identified in GHG reporting, supply chain processes, and governance framework.'
+        recommendations: 'Key improvement areas identified in GHG reporting, supply chain processes, and governance framework. Supporting documents provided additional context for comprehensive analysis.'
       };
 
       // Update database
