@@ -15,10 +15,57 @@ export function ResultsStep({ data, onStartNew }: ResultsStepProps) {
   const { toast } = useToast();
 
   const exportReport = () => {
-    // TODO: Implement report export functionality
+    const results = data.analysisResults.results;
+    const score = data.analysisResults.compliance_score;
+    
+    // Create report content
+    const reportContent = `
+SUSTAINABILITY COMPLIANCE ANALYSIS REPORT
+========================================
+
+Project: ${data.project?.name}
+Legal Framework: ${data.legalFramework?.name}
+Document: ${data.document?.original_filename}
+Analysis Date: ${new Date(data.analysisResults.created_at).toLocaleDateString()}
+
+COMPLIANCE SCORE: ${score}% - ${getComplianceLabel(score)}
+
+METRICS OVERVIEW
+================
+Total Indicators: ${results.total_indicators}
+Compliant Indicators: ${results.compliant_indicators}
+Gaps Identified: ${results.gaps_identified}
+Critical Issues: ${results.critical_gaps}
+
+AI RECOMMENDATIONS
+==================
+${data.analysisResults.recommendations}
+
+FRAMEWORK DETAILS
+=================
+Name: ${data.legalFramework?.name}
+Description: ${data.legalFramework?.description}
+Jurisdiction: ${data.legalFramework?.jurisdiction}
+Category: ${data.legalFramework?.category}
+Effective Date: ${data.legalFramework?.effective_date}
+
+Report generated on ${new Date().toLocaleString()}
+    `.trim();
+
+    // Create and download the file
+    const blob = new Blob([reportContent], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `sustainability-analysis-report-${data.project?.name || 'project'}-${new Date().toISOString().split('T')[0]}.txt`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
     toast({
-      title: "Export started",
-      description: "Your detailed analysis report is being generated.",
+      title: "Report downloaded",
+      description: "Your detailed analysis report has been downloaded.",
     });
   };
 
