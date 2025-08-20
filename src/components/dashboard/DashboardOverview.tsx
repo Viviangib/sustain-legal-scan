@@ -421,7 +421,7 @@ Report generated on ${new Date().toLocaleString()}
                                  </Button>
                                </TooltipTrigger>
                                <TooltipContent>
-                                 <p>Detailed indicator analysis</p>
+                                 <p>Download detailed indicator analysis (EXCEL)</p>
                                </TooltipContent>
                              </Tooltip>
                              <Tooltip>
@@ -436,8 +436,7 @@ Report generated on ${new Date().toLocaleString()}
                                  </Button>
                                </TooltipTrigger>
                                <TooltipContent>
-                                 <p>Download Summary Report</p>
-                                 <p className="text-xs text-muted-foreground">Text-based compliance summary</p>
+                                 <p>Download summary report (WORD)</p>
                                </TooltipContent>
                              </Tooltip>
                            </div>
