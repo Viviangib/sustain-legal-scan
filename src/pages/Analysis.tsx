@@ -60,6 +60,17 @@ const Analysis = () => {
     }
   };
 
+  const startNewAnalysis = () => {
+    setCurrentStep(1);
+    setAnalysisData({
+      project: null,
+      document: null,
+      indicators: [],
+      legalFramework: null,
+      analysisResults: null,
+    });
+  };
+
   const getStepStatus = (stepNumber: number) => {
     if (stepNumber < currentStep) return 'complete';
     if (stepNumber === currentStep) return 'current';
@@ -88,7 +99,7 @@ const Analysis = () => {
       case 4:
         return <AnalysisStep onNext={nextStep} onDataUpdate={updateAnalysisData} data={analysisData} />;
       case 5:
-        return <ResultsStep data={analysisData} />;
+        return <ResultsStep data={analysisData} onStartNew={startNewAnalysis} />;
       default:
         return null;
     }

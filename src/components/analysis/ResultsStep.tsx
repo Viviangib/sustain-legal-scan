@@ -8,9 +8,10 @@ import { AnalysisData } from '@/pages/Analysis';
 
 interface ResultsStepProps {
   data: AnalysisData;
+  onStartNew?: () => void;
 }
 
-export function ResultsStep({ data }: ResultsStepProps) {
+export function ResultsStep({ data, onStartNew }: ResultsStepProps) {
   const { toast } = useToast();
 
   const exportReport = () => {
@@ -148,7 +149,7 @@ export function ResultsStep({ data }: ResultsStepProps) {
               <Download className="h-4 w-4 mr-2" />
               Export Detailed Report
             </Button>
-            <Button variant="outline" className="flex-1">
+            <Button variant="outline" className="flex-1" onClick={onStartNew}>
               <BarChart3 className="h-4 w-4 mr-2" />
               Start New Analysis
             </Button>
