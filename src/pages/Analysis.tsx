@@ -49,7 +49,6 @@ const Analysis = () => {
     legalFramework: null,
     analysisResults: null,
   });
-  const [lastAnalysisData, setLastAnalysisData] = useState<AnalysisData | null>(null);
 
   const updateAnalysisData = (data: Partial<AnalysisData>) => {
     setAnalysisData(prev => ({ ...prev, ...data }));
@@ -62,8 +61,6 @@ const Analysis = () => {
   };
 
   const startNewAnalysis = () => {
-    // Store the current analysis data as last analysis data
-    setLastAnalysisData(analysisData);
     setCurrentStep(1);
     setAnalysisData({
       project: null,
@@ -103,7 +100,7 @@ const Analysis = () => {
   const renderStepContent = () => {
     switch (currentStep) {
       case 1:
-        return <UploadStep onNext={nextStep} onDataUpdate={updateAnalysisData} lastAnalysisData={lastAnalysisData} />;
+        return <UploadStep onNext={nextStep} onDataUpdate={updateAnalysisData} />;
       case 2:
         return <IndicatorStep onNext={nextStep} onDataUpdate={updateAnalysisData} data={analysisData} />;
       case 3:

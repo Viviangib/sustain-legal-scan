@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,24 +13,51 @@ import { AnalysisData } from '@/pages/Analysis';
 interface UploadStepProps {
   onNext: () => void;
   onDataUpdate: (data: Partial<AnalysisData>) => void;
-  lastAnalysisData?: AnalysisData | null;
 }
 
-export function UploadStep({ onNext, onDataUpdate, lastAnalysisData }: UploadStepProps) {
+export function UploadStep({ onNext, onDataUpdate }: UploadStepProps) {
   const [frameworkName, setFrameworkName] = useState('');
   const [version, setVersion] = useState('');
   const [publicationTime, setPublicationTime] = useState('');
   const [organization, setOrganization] = useState('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
-  const [showAutoFillOption, setShowAutoFillOption] = useState(!!lastAnalysisData);
+  const [showAutoFillOption, setShowAutoFillOption] = useState(false);
+  const [previousAnalysisData, setPreviousAnalysisData] = useState<any>(null);
   const { user } = useAuth();
   const { toast } = useToast();
 
+  useEffect(() => {
+    const checkForPreviousAnalysis = async () => {
+      if (!user) return;
+
+      try {
+        // Get the most recent project with analysis results
+        const { data: projects, error } = await supabase
+          .from('projects')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false })
+          .limit(1);
+
+        if (error) throw error;
+
+        if (projects && projects.length > 0) {
+          setPreviousAnalysisData(projects[0]);
+          setShowAutoFillOption(true);
+        }
+      } catch (error) {
+        console.error('Error checking for previous analysis:', error);
+      }
+    };
+
+    checkForPreviousAnalysis();
+  }, [user]);
+
   const fillFromLastAnalysis = () => {
-    if (lastAnalysisData?.project) {
+    if (previousAnalysisData) {
       // Extract data from project description
-      const description = lastAnalysisData.project.description || '';
+      const description = previousAnalysisData.description || '';
       const frameworkMatch = description.match(/Framework: ([^|]+)/);
       const versionMatch = description.match(/Version: ([^|]+)/);
       const publishedMatch = description.match(/Published: ([^|]+)/);
