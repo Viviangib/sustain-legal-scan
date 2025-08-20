@@ -21,7 +21,8 @@ import {
   Calendar,
   SortAsc,
   SortDesc,
-  FileSpreadsheet
+  Sheet,
+  FileType
 } from 'lucide-react';
 
 interface Analysis {
@@ -488,7 +489,7 @@ Report generated on ${new Date().toLocaleString()}
                                         onClick={() => downloadExcelReport(analysis)}
                                         className="h-8 px-2"
                                       >
-                                        <FileSpreadsheet className="h-4 w-4" />
+                                        <Sheet className="h-4 w-4" />
                                       </Button>
                                     </TooltipTrigger>
                                     <TooltipContent>
@@ -503,12 +504,12 @@ Report generated on ${new Date().toLocaleString()}
                                         onClick={() => downloadSummaryReport(analysis)}
                                         className="h-8 px-2"
                                       >
-                                        <FileText className="h-4 w-4" />
+                                        <FileType className="h-4 w-4" />
                                       </Button>
                                     </TooltipTrigger>
-                                     <TooltipContent>
-                                       <p>Download summary report (WORD)</p>
-                                     </TooltipContent>
+                                    <TooltipContent>
+                                      <p>Download summary report (WORD)</p>
+                                    </TooltipContent>
                                   </Tooltip>
                                 </div>
                               </TooltipProvider>

@@ -21,7 +21,8 @@ import {
   Calendar,
   Eye,
   ExternalLink,
-  FileSpreadsheet
+  Sheet,
+  FileType
 } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -408,29 +409,29 @@ Report generated on ${new Date().toLocaleString()}
                                    size="sm" 
                                    variant="outline" 
                                    onClick={() => downloadExcelReport(analysis)}
-                                   className="h-8 px-2"
-                                 >
-                                   <FileSpreadsheet className="h-4 w-4" />
-                                 </Button>
-                               </TooltipTrigger>
-                               <TooltipContent>
-                                 <p>Download indicator analysis (EXCEL)</p>
-                               </TooltipContent>
-                             </Tooltip>
-                             <Tooltip>
-                               <TooltipTrigger asChild>
-                                 <Button 
-                                   size="sm" 
-                                   variant="outline" 
-                                   onClick={() => downloadSummaryReport(analysis)}
-                                   className="h-8 px-2"
-                                 >
-                                   <FileText className="h-4 w-4" />
-                                 </Button>
-                               </TooltipTrigger>
-                               <TooltipContent>
-                                 <p>Download summary report (WORD)</p>
-                               </TooltipContent>
+                                    className="h-8 px-2"
+                                  >
+                                    <Sheet className="h-4 w-4" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>Download indicator analysis (EXCEL)</p>
+                                </TooltipContent>
+                              </Tooltip>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button 
+                                    size="sm" 
+                                    variant="outline" 
+                                    onClick={() => downloadSummaryReport(analysis)}
+                                    className="h-8 px-2"
+                                  >
+                                    <FileType className="h-4 w-4" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>Download summary report (WORD)</p>
+                                </TooltipContent>
                              </Tooltip>
                            </div>
                          </TooltipProvider>
