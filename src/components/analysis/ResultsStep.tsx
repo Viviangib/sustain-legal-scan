@@ -3,7 +3,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
-import { Download, BarChart3, AlertTriangle, CheckCircle, FileText } from 'lucide-react';
+import { Download, BarChart3, AlertTriangle, CheckCircle, FileText, PieChart } from 'lucide-react';
+import { PieChart as RechartsPieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
 import { AnalysisData } from '@/pages/Analysis';
 
 interface ResultsStepProps {
@@ -95,28 +96,60 @@ Report generated on ${new Date().toLocaleString()}
   const results = data.analysisResults.results;
   const score = data.analysisResults.compliance_score;
 
+  // Mock alignment data - replace with actual data from analysis results
+  const alignmentData = [
+    { name: 'Fully Aligned', value: 4, color: '#10B981' },
+    { name: 'Mostly Aligned', value: 6, color: '#3B82F6' },
+    { name: 'Partially Aligned', value: 3, color: '#F59E0B' },
+    { name: 'Not Aligned', value: 2, color: '#EF4444' },
+    { name: 'Not Applicable', value: 0, color: '#6B7280' }
+  ];
+
   return (
     <div className="space-y-6">
-      {/* Overall Score */}
+      {/* Alignment Distribution */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
-            <BarChart3 className="h-5 w-5" />
-            <span>Compliance Score</span>
+            <PieChart className="h-5 w-5" />
+            <span>Indicator Alignment Distribution</span>
           </CardTitle>
           <CardDescription>
-            Overall compliance with {data.legalFramework?.name} requirements
+            Distribution of alignment levels across all {results.total_indicators} indicators
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="text-center space-y-4">
-            <div className={`text-6xl font-bold ${getComplianceColor(score)}`}>
-              {score}%
-            </div>
-            <Badge variant="secondary" className="text-lg px-4 py-2">
-              {getComplianceLabel(score)}
-            </Badge>
-            <Progress value={score} className="h-3" />
+          <div className="h-80">
+            <ResponsiveContainer width="100%" height="100%">
+              <RechartsPieChart>
+                <Pie
+                  data={alignmentData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={60}
+                  outerRadius={120}
+                  paddingAngle={2}
+                  dataKey="value"
+                >
+                  {alignmentData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip 
+                  formatter={(value, name) => [`${value} indicators`, name]}
+                  labelStyle={{ color: '#000' }}
+                />
+                <Legend 
+                  verticalAlign="bottom" 
+                  height={36}
+                  formatter={(value, entry) => (
+                    <span style={{ color: entry.color }}>
+                      {value}: {alignmentData.find(item => item.name === value)?.value || 0}
+                    </span>
+                  )}
+                />
+              </RechartsPieChart>
+            </ResponsiveContainer>
           </div>
         </CardContent>
       </Card>
