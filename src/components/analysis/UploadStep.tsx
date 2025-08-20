@@ -26,6 +26,7 @@ export function UploadStep({ onNext, onDataUpdate }: UploadStepProps) {
   const [showAutoFillOption, setShowAutoFillOption] = useState(false);
   const [previousAnalysisData, setPreviousAnalysisData] = useState<any>(null);
   const [previousDocument, setPreviousDocument] = useState<any>(null);
+  const [isUsingPreviousDocument, setIsUsingPreviousDocument] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -83,16 +84,12 @@ export function UploadStep({ onNext, onDataUpdate }: UploadStepProps) {
       if (publishedMatch) setPublicationTime(publishedMatch[1].trim());
       if (organizationMatch) setOrganization(organizationMatch[1].trim());
 
-      // If user wants to include document, create a mock file object
+      // If user wants to include document, set up previous document usage
       if (includeDocument && previousDocument) {
-        const mockFile = new File([''], previousDocument.original_filename, {
-          type: previousDocument.content_type,
-        });
-        // Add custom properties to track it's from previous analysis
-        (mockFile as any).isPreviousDocument = true;
-        (mockFile as any).documentId = previousDocument.id;
-        (mockFile as any).size = previousDocument.file_size;
-        setSelectedFile(mockFile);
+        setIsUsingPreviousDocument(true);
+        setSelectedFile(null); // Clear any selected file
+      } else {
+        setIsUsingPreviousDocument(false);
       }
     }
     setShowAutoFillOption(false);
@@ -104,9 +101,17 @@ export function UploadStep({ onNext, onDataUpdate }: UploadStepProps) {
     });
   };
 
+  const removeFile = () => {
+    setSelectedFile(null);
+    setIsUsingPreviousDocument(false);
+  };
+
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
+      // Reset previous document usage when new file is selected
+      setIsUsingPreviousDocument(false);
+      
       // Check file type
       const allowedTypes = [
         'application/pdf',
@@ -138,10 +143,6 @@ export function UploadStep({ onNext, onDataUpdate }: UploadStepProps) {
 
       setSelectedFile(file);
     }
-  };
-
-  const removeFile = () => {
-    setSelectedFile(null);
   };
 
   const handleSubmit = async () => {
@@ -181,7 +182,7 @@ export function UploadStep({ onNext, onDataUpdate }: UploadStepProps) {
       return;
     }
 
-    if (!selectedFile) {
+    if (!selectedFile && !isUsingPreviousDocument) {
       toast({
         variant: "destructive",
         title: "File required",
@@ -220,7 +221,7 @@ export function UploadStep({ onNext, onDataUpdate }: UploadStepProps) {
       let uploadData;
       let document;
 
-      if (selectedFile && (selectedFile as any).isPreviousDocument) {
+      if (isUsingPreviousDocument && previousDocument) {
         // Reuse previous document
         document = previousDocument;
         toast({
@@ -371,7 +372,7 @@ export function UploadStep({ onNext, onDataUpdate }: UploadStepProps) {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {!selectedFile ? (
+          {!selectedFile && !isUsingPreviousDocument ? (
             <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-8 text-center">
               <Upload className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
               <p className="text-lg font-medium mb-2">Choose a file to upload</p>
@@ -398,25 +399,19 @@ export function UploadStep({ onNext, onDataUpdate }: UploadStepProps) {
                   <FileText className="h-8 w-8 text-primary" />
                   <div>
                     <div className="flex items-center gap-2">
-                      <p className="font-medium">{selectedFile.name}</p>
-                      {(selectedFile as any).isPreviousDocument && (
+                      <p className="font-medium">
+                        {isUsingPreviousDocument ? previousDocument?.original_filename : selectedFile?.name}
+                      </p>
+                      {isUsingPreviousDocument && (
                         <Badge variant="secondary" className="text-xs">
                           From previous analysis
                         </Badge>
                       )}
                     </div>
                     <p className="text-sm text-muted-foreground">
-                      {((selectedFile as any).isPreviousDocument 
-                        ? (selectedFile as any).size 
-                        : selectedFile.size
-                      ) / 1024 / 1024 < 0.01 
-                        ? '< 0.01 MB' 
-                        : ((((selectedFile as any).isPreviousDocument 
-                          ? (selectedFile as any).size 
-                          : selectedFile.size
-                        ) / 1024 / 1024).toFixed(2) + ' MB')}
+                      {((isUsingPreviousDocument ? previousDocument?.file_size : selectedFile?.size) / 1024 / 1024).toFixed(2)} MB
                     </p>
-                    {(selectedFile as any).isPreviousDocument && (
+                    {isUsingPreviousDocument && (
                       <p className="text-xs text-muted-foreground">
                         This document will be reused from your previous analysis
                       </p>
