@@ -70,6 +70,20 @@ export function UploadStep({ onNext, onDataUpdate }: UploadStepProps) {
 
           if (!docError && documents && documents.length > 0) {
             setPreviousDocument(documents[0]);
+          } else {
+            // Fallback: fetch the latest document across all user projects
+            const { data: userDocs, error: userDocError } = await supabase
+              .from('documents')
+              .select('*')
+              .eq('user_id', user.id)
+              .order('created_at', { ascending: false })
+              .limit(1);
+
+            console.log('Fallback last user document:', userDocs);
+
+            if (!userDocError && userDocs && userDocs.length > 0) {
+              setPreviousDocument(userDocs[0]);
+            }
           }
           
           setShowAutoFillOption(true);
@@ -320,11 +334,9 @@ export function UploadStep({ onNext, onDataUpdate }: UploadStepProps) {
                 <Button size="sm" onClick={() => fillFromLastAnalysis(false)}>
                   Auto-fill form only
                 </Button>
-                {previousDocument && (
-                  <Button size="sm" onClick={() => fillFromLastAnalysis(true)}>
-                    Auto-fill + Use last document
-                  </Button>
-                )}
+                <Button size="sm" onClick={() => fillFromLastAnalysis(true)} disabled={!previousDocument} title={previousDocument ? undefined : 'No previous document found'}>
+                  Auto-fill + Use last document
+                </Button>
               </div>
               {previousDocument && (
                 <p className="text-xs text-muted-foreground">
