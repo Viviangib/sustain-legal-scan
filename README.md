@@ -1,5 +1,7 @@
 # Welcome to your Lovable project
 
+ACCESS THIS APPLICATION: https://6e9c80c5-b90c-4c3e-998b-96090c6919e5.lovableproject.com/
+
 ## Project info
 
 **URL**: https://lovable.dev/projects/6e9c80c5-b90c-4c3e-998b-96090c6919e5
