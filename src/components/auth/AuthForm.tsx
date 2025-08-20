@@ -11,8 +11,10 @@ export function AuthForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
+  const [resetEmail, setResetEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const { signIn, signUp } = useAuth();
+  const [showResetForm, setShowResetForm] = useState(false);
+  const { signIn, signUp, resetPassword } = useAuth();
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,6 +28,15 @@ export function AuthForm() {
     setIsLoading(true);
     await signUp(email, password, fullName);
     setIsLoading(false);
+  };
+
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    await resetPassword(resetEmail);
+    setIsLoading(false);
+    setShowResetForm(false);
+    setResetEmail('');
   };
 
   return (
@@ -87,6 +98,57 @@ export function AuthForm() {
                     'Sign In'
                   )}
                 </Button>
+                <div className="text-center mt-4">
+                  <button
+                    type="button"
+                    onClick={() => setShowResetForm(!showResetForm)}
+                    className="text-sm text-primary hover:underline"
+                  >
+                    Forgot your password?
+                  </button>
+                </div>
+                {showResetForm && (
+                  <form onSubmit={handleResetPassword} className="mt-4 p-4 border rounded-md bg-muted/50">
+                    <div className="space-y-2">
+                      <Label htmlFor="reset-email">Email for password reset</Label>
+                      <Input
+                        id="reset-email"
+                        type="email"
+                        placeholder="Enter your email"
+                        value={resetEmail}
+                        onChange={(e) => setResetEmail(e.target.value)}
+                        required
+                      />
+                    </div>
+                    <div className="flex gap-2 mt-4">
+                      <Button 
+                        type="submit" 
+                        size="sm" 
+                        disabled={isLoading}
+                      >
+                        {isLoading ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Sending...
+                          </>
+                        ) : (
+                          'Send Reset Email'
+                        )}
+                      </Button>
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => {
+                          setShowResetForm(false);
+                          setResetEmail('');
+                        }}
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  </form>
+                )}
               </form>
             </TabsContent>
             
