@@ -509,8 +509,7 @@ Report generated on ${new Date().toLocaleString()}
                                       </Button>
                                     </TooltipTrigger>
                                     <TooltipContent>
-                                      <p>Download Excel Report</p>
-                                      <p className="text-xs text-muted-foreground">Detailed indicator analysis with charts</p>
+                                      <p>Detailed indicator analysis</p>
                                     </TooltipContent>
                                   </Tooltip>
                                   <Tooltip>
@@ -524,10 +523,10 @@ Report generated on ${new Date().toLocaleString()}
                                         <FileText className="h-4 w-4" />
                                       </Button>
                                     </TooltipTrigger>
-                                    <TooltipContent>
-                                      <p>Download Summary Report</p>
-                                      <p className="text-xs text-muted-foreground">Text-based compliance summary</p>
-                                    </TooltipContent>
+                                     <TooltipContent>
+                                       <p>Download Summary Report</p>
+                                       <p className="text-xs text-muted-foreground">Text-based compliance summary</p>
+                                     </TooltipContent>
                                   </Tooltip>
                                 </div>
                               </TooltipProvider>

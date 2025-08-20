@@ -421,8 +421,7 @@ Report generated on ${new Date().toLocaleString()}
                                  </Button>
                                </TooltipTrigger>
                                <TooltipContent>
-                                 <p>Download Excel Report</p>
-                                 <p className="text-xs text-muted-foreground">Detailed indicator analysis with charts</p>
+                                 <p>Detailed indicator analysis</p>
                                </TooltipContent>
                              </Tooltip>
                              <Tooltip>
