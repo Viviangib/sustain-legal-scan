@@ -9,9 +9,10 @@ import { AnalysisData } from '@/pages/Analysis';
 interface ResultsStepProps {
   data: AnalysisData;
   onStartNew?: () => void;
+  onSelectAnotherFramework?: () => void;
 }
 
-export function ResultsStep({ data, onStartNew }: ResultsStepProps) {
+export function ResultsStep({ data, onStartNew, onSelectAnotherFramework }: ResultsStepProps) {
   const { toast } = useToast();
 
   const exportReport = () => {
@@ -195,6 +196,10 @@ Report generated on ${new Date().toLocaleString()}
             <Button onClick={exportReport} className="flex-1">
               <Download className="h-4 w-4 mr-2" />
               Export Detailed Report
+            </Button>
+            <Button variant="outline" className="flex-1" onClick={onSelectAnotherFramework}>
+              <FileText className="h-4 w-4 mr-2" />
+              Select Another Legal Framework
             </Button>
             <Button variant="outline" className="flex-1" onClick={onStartNew}>
               <BarChart3 className="h-4 w-4 mr-2" />
