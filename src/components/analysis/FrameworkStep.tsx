@@ -159,8 +159,13 @@ export function FrameworkStep({ onNext, onPrevious, onDataUpdate }: FrameworkSte
             </div>
           )}
 
-          <div className="mt-6 flex justify-end">
-            <Button onClick={handleContinue} disabled={!selectedFramework}>
+          <div className="mt-6 flex justify-between">
+            {onPrevious && (
+              <Button onClick={onPrevious} variant="outline">
+                Previous Step
+              </Button>
+            )}
+            <Button onClick={handleContinue} disabled={!selectedFramework} className={onPrevious ? '' : 'ml-auto'}>
               Continue to Analysis
             </Button>
           </div>
