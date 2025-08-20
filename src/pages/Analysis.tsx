@@ -32,7 +32,7 @@ export type AnalysisData = {
 };
 
 const steps = [
-  { id: 1, name: 'Upload Document', icon: Upload, status: 'current' },
+  { id: 1, name: 'Primary Information', icon: Upload, status: 'current' },
   { id: 2, name: 'Upload Supporting Documents', icon: FileText, status: 'upcoming' },
   { id: 3, name: 'Select Framework', icon: Settings, status: 'upcoming' },
   { id: 4, name: 'AI Analysis', icon: BarChart3, status: 'upcoming' },
