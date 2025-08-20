@@ -5,7 +5,8 @@ import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { BarChart3, Loader2 } from 'lucide-react';
+import { BarChart3, Loader2, Download } from 'lucide-react';
+import * as XLSX from 'xlsx';
 import { AnalysisData } from '@/pages/Analysis';
 
 interface AnalysisStepProps {
@@ -125,6 +126,110 @@ export function AnalysisStep({ onNext, onPrevious, onDataUpdate, data }: Analysi
     }
   };
 
+  const downloadIndicatorAnalysis = () => {
+    if (!results || !data.legalFramework) {
+      toast({
+        variant: "destructive",
+        title: "No data available",
+        description: "Analysis results are not available for download.",
+      });
+      return;
+    }
+
+    // Mock detailed indicator analysis data
+    const indicatorData = [
+      {
+        'Indicator ID': 'IND-001',
+        'Indicator Name': 'GHG Emissions Disclosure',
+        'Category': 'Environmental',
+        'Alignment Level': 'Fully Aligned',
+        'Compliance Score': 95,
+        'Evidence Found': 'Comprehensive GHG inventory in sustainability report',
+        'Gap Analysis': 'No significant gaps identified',
+        'Recommendations': 'Continue current reporting practices'
+      },
+      {
+        'Indicator ID': 'IND-002',
+        'Indicator Name': 'Supply Chain Due Diligence',
+        'Category': 'Social',
+        'Alignment Level': 'Mostly Aligned',
+        'Compliance Score': 82,
+        'Evidence Found': 'Supplier code of conduct and audit procedures',
+        'Gap Analysis': 'Limited disclosure on tier 2+ suppliers',
+        'Recommendations': 'Expand supplier transparency reporting'
+      },
+      {
+        'Indicator ID': 'IND-003',
+        'Indicator Name': 'Board Diversity',
+        'Category': 'Governance',
+        'Alignment Level': 'Partially Aligned',
+        'Compliance Score': 65,
+        'Evidence Found': 'Basic diversity statistics reported',
+        'Gap Analysis': 'Missing diversity targets and strategy',
+        'Recommendations': 'Develop comprehensive diversity strategy with measurable targets'
+      },
+      {
+        'Indicator ID': 'IND-004',
+        'Indicator Name': 'Water Management',
+        'Category': 'Environmental',
+        'Alignment Level': 'Not Aligned',
+        'Compliance Score': 25,
+        'Evidence Found': 'Limited water usage data',
+        'Gap Analysis': 'No water risk assessment or management strategy',
+        'Recommendations': 'Implement comprehensive water management framework'
+      },
+      {
+        'Indicator ID': 'IND-005',
+        'Indicator Name': 'Employee Training',
+        'Category': 'Social',
+        'Alignment Level': 'Fully Aligned',
+        'Compliance Score': 90,
+        'Evidence Found': 'Detailed training programs and metrics',
+        'Gap Analysis': 'Minor gaps in accessibility reporting',
+        'Recommendations': 'Enhance reporting on training accessibility'
+      }
+    ];
+
+    // Create workbook and worksheet
+    const ws = XLSX.utils.json_to_sheet(indicatorData);
+    const wb = XLSX.utils.book_new();
+    
+    // Add summary sheet
+    const summaryData = [
+      ['Analysis Summary', ''],
+      ['Project Name', data.project?.name || 'N/A'],
+      ['Legal Framework', data.legalFramework.name],
+      ['Analysis Date', new Date().toLocaleDateString()],
+      ['Overall Compliance Score', `${results.compliance_score}%`],
+      ['', ''],
+      ['Key Metrics', ''],
+      ['Total Indicators', results.results.total_indicators],
+      ['Compliant Indicators', results.results.compliant_indicators],
+      ['Gaps Identified', results.results.gaps_identified],
+      ['Critical Issues', results.results.critical_gaps],
+      ['', ''],
+      ['AI Recommendations', ''],
+      [results.recommendations, '']
+    ];
+    
+    const summaryWs = XLSX.utils.aoa_to_sheet(summaryData);
+    
+    // Add sheets to workbook
+    XLSX.utils.book_append_sheet(wb, summaryWs, 'Analysis Summary');
+    XLSX.utils.book_append_sheet(wb, ws, 'Indicator Analysis');
+    
+    // Generate filename
+    const filename = `indicator-analysis-${data.project?.name || 'project'}-${new Date().toISOString().split('T')[0]}.xlsx`;
+    
+    // Download file
+    XLSX.writeFile(wb, filename);
+    
+    toast({
+      title: "File downloaded",
+      description: "Indicator analysis has been exported to Excel.",
+    });
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -175,6 +280,14 @@ export function AnalysisStep({ onNext, onPrevious, onDataUpdate, data }: Analysi
               </div>
               <h3 className="text-lg font-semibold mb-2">Analysis Complete</h3>
               <p className="text-muted-foreground">Your sustainability framework analysis has been completed successfully.</p>
+            </div>
+            
+            {/* Download button for indicator analysis */}
+            <div className="text-center pb-4">
+              <Button onClick={downloadIndicatorAnalysis} variant="outline" className="mr-4">
+                <Download className="h-4 w-4 mr-2" />
+                Download Indicator Analysis (Excel)
+              </Button>
             </div>
             
             <div className="flex justify-between">
