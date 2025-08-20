@@ -532,7 +532,7 @@ Report generated on ${new Date().toLocaleString()}
       <Card className="mt-8 border-muted/30">
         <CardContent className="p-6">
           <div className="flex flex-col md:flex-row items-center justify-center gap-2 text-sm text-muted-foreground">
-            <p className="text-center">
+            <p className="text-center flex items-center justify-center gap-2 flex-wrap">
               The creation of this tool was possible thanks to a grant from the{' '}
               <a 
                 href="https://www.isealalliance.org/fund" 
@@ -542,7 +542,12 @@ Report generated on ${new Date().toLocaleString()}
               >
                 ISEAL Innovations Fund
               </a>
-              , which was supported by: Swiss Government
+              , which was supported by:
+              <img 
+                src="/logo_seco.jpg" 
+                alt="Swiss Government SECO" 
+                className="h-6 inline-block"
+              />
             </p>
           </div>
         </CardContent>
