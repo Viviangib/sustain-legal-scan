@@ -280,15 +280,44 @@ Report generated on ${new Date().toLocaleString()}
   };
   return (
     <div className="space-y-6">
-      {/* Welcome Section */}
-      <div className="bg-gradient-to-r from-primary/10 to-accent/10 rounded-lg p-6">
-        <Link to="/analysis">
-          <Button>
-            <Plus className="mr-2 h-4 w-4" />
-            Start New Analysis
-          </Button>
-        </Link>
-      </div>
+      {/* Start New Analysis Section */}
+      <Card className="bg-gradient-to-r from-primary/5 to-accent/5 border-primary/20">
+        <CardContent className="p-8">
+          <div className="flex flex-col lg:flex-row items-center justify-between gap-6">
+            <div className="flex-1 text-center lg:text-left">
+              <h2 className="text-2xl font-bold text-foreground mb-2">
+                Ready to analyze your sustainability documents?
+              </h2>
+              <p className="text-muted-foreground mb-4 max-w-2xl">
+                Upload your sustainability reports and get comprehensive compliance analysis against legal frameworks like CS3D, EUDR, CSRD, and SFDR. Identify gaps and receive actionable recommendations.
+              </p>
+              <div className="flex flex-wrap justify-center lg:justify-start gap-4 text-sm text-muted-foreground">
+                <div className="flex items-center gap-2">
+                  <Shield className="h-4 w-4 text-primary" />
+                  <span>Compliance Check</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <BarChart3 className="h-4 w-4 text-primary" />
+                  <span>Performance Analysis</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <TrendingUp className="h-4 w-4 text-primary" />
+                  <span>AI Recommendations</span>
+                </div>
+              </div>
+            </div>
+            <div className="flex flex-col items-center gap-4">
+              <Link to="/analysis">
+                <Button size="lg" className="px-8 py-6 text-lg font-semibold shadow-lg hover:shadow-xl transition-shadow">
+                  <Plus className="mr-3 h-5 w-5" />
+                  Start New Analysis
+                </Button>
+              </Link>
+              <p className="text-xs text-muted-foreground">Free analysis • Results in minutes</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
