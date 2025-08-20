@@ -12,6 +12,7 @@ import { AnalysisData } from '@/pages/Analysis';
 
 interface UploadSupportingDocumentsStepProps {
   onNext: () => void;
+  onPrevious?: () => void;
   onDataUpdate: (data: Partial<AnalysisData>) => void;
   data: AnalysisData;
 }
@@ -24,7 +25,7 @@ interface SupportingDocument {
   uploaded?: boolean;
 }
 
-export function UploadSupportingDocumentsStep({ onNext, onDataUpdate, data }: UploadSupportingDocumentsStepProps) {
+export function UploadSupportingDocumentsStep({ onNext, onPrevious, onDataUpdate, data }: UploadSupportingDocumentsStepProps) {
   const [supportingDocuments, setSupportingDocuments] = useState<SupportingDocument[]>([]);
   const [uploading, setUploading] = useState(false);
   const { user } = useAuth();
@@ -265,6 +266,16 @@ export function UploadSupportingDocumentsStep({ onNext, onDataUpdate, data }: Up
       <Card>
         <CardContent className="pt-6">
           <div className="flex flex-col sm:flex-row gap-4">
+            {onPrevious && (
+              <Button 
+                onClick={onPrevious} 
+                variant="outline" 
+                className="flex-1"
+                disabled={uploading}
+              >
+                Previous Step
+              </Button>
+            )}
             <Button 
               onClick={handleSkip} 
               variant="outline" 

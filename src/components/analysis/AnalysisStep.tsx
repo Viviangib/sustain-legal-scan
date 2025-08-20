@@ -10,11 +10,12 @@ import { AnalysisData } from '@/pages/Analysis';
 
 interface AnalysisStepProps {
   onNext: () => void;
+  onPrevious?: () => void;
   onDataUpdate: (data: Partial<AnalysisData>) => void;
   data: AnalysisData;
 }
 
-export function AnalysisStep({ onNext, onDataUpdate, data }: AnalysisStepProps) {
+export function AnalysisStep({ onNext, onPrevious, onDataUpdate, data }: AnalysisStepProps) {
   const [analyzing, setAnalyzing] = useState(false);
   const [progress, setProgress] = useState(0);
   const [results, setResults] = useState<any>(null);
@@ -188,8 +189,13 @@ export function AnalysisStep({ onNext, onDataUpdate, data }: AnalysisStepProps) 
               </div>
             </div>
             
-            <div className="flex justify-end">
-              <Button onClick={onNext}>View Full Results</Button>
+            <div className="flex justify-between">
+              {onPrevious && (
+                <Button onClick={onPrevious} variant="outline">
+                  Previous Step
+                </Button>
+              )}
+              <Button onClick={onNext} className={onPrevious ? '' : 'ml-auto'}>View Full Results</Button>
             </div>
           </div>
         )}

@@ -60,6 +60,12 @@ const Analysis = () => {
     }
   };
 
+  const previousStep = () => {
+    if (currentStep > 1) {
+      setCurrentStep(currentStep - 1);
+    }
+  };
+
   const startNewAnalysis = () => {
     setCurrentStep(1);
     setAnalysisData({
@@ -102,11 +108,11 @@ const Analysis = () => {
       case 1:
         return <UploadStep onNext={nextStep} onDataUpdate={updateAnalysisData} />;
       case 2:
-        return <UploadSupportingDocumentsStep onNext={nextStep} onDataUpdate={updateAnalysisData} data={analysisData} />;
+        return <UploadSupportingDocumentsStep onNext={nextStep} onPrevious={previousStep} onDataUpdate={updateAnalysisData} data={analysisData} />;
       case 3:
-        return <FrameworkStep onNext={nextStep} onDataUpdate={updateAnalysisData} />;
+        return <FrameworkStep onNext={nextStep} onPrevious={previousStep} onDataUpdate={updateAnalysisData} />;
       case 4:
-        return <AnalysisStep onNext={nextStep} onDataUpdate={updateAnalysisData} data={analysisData} />;
+        return <AnalysisStep onNext={nextStep} onPrevious={previousStep} onDataUpdate={updateAnalysisData} data={analysisData} />;
       case 5:
         return <ResultsStep data={analysisData} onStartNew={startNewAnalysis} onSelectAnotherFramework={selectAnotherFramework} />;
       default:

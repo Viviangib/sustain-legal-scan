@@ -11,6 +11,7 @@ import { AnalysisData } from '@/pages/Analysis';
 
 interface FrameworkStepProps {
   onNext: () => void;
+  onPrevious?: () => void;
   onDataUpdate: (data: Partial<AnalysisData>) => void;
 }
 
@@ -23,7 +24,7 @@ interface LegalFramework {
   effective_date: string;
 }
 
-export function FrameworkStep({ onNext, onDataUpdate }: FrameworkStepProps) {
+export function FrameworkStep({ onNext, onPrevious, onDataUpdate }: FrameworkStepProps) {
   const [frameworks, setFrameworks] = useState<LegalFramework[]>([]);
   const [selectedFramework, setSelectedFramework] = useState<string>('');
   const [loading, setLoading] = useState(true);
