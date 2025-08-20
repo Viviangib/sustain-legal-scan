@@ -167,26 +167,14 @@ export function AnalysisStep({ onNext, onPrevious, onDataUpdate, data }: Analysi
           </div>
         ) : (
           <div className="space-y-4">
-            <div className="text-center">
-              <div className="text-4xl font-bold text-green-600 mb-2">
-                {results.compliance_score}%
+            <div className="text-center py-8">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-green-100 flex items-center justify-center">
+                <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
               </div>
-              <p className="text-muted-foreground">Compliance Score</p>
-            </div>
-            
-            <div className="grid grid-cols-3 gap-4 text-center">
-              <div>
-                <div className="text-2xl font-bold">{results.results.total_indicators}</div>
-                <div className="text-sm text-muted-foreground">Total</div>
-              </div>
-              <div>
-                <div className="text-2xl font-bold text-green-600">{results.results.compliant_indicators}</div>
-                <div className="text-sm text-muted-foreground">Compliant</div>
-              </div>
-              <div>
-                <div className="text-2xl font-bold text-red-600">{results.results.gaps_identified}</div>
-                <div className="text-sm text-muted-foreground">Gaps</div>
-              </div>
+              <h3 className="text-lg font-semibold mb-2">Analysis Complete</h3>
+              <p className="text-muted-foreground">Your sustainability framework analysis has been completed successfully.</p>
             </div>
             
             <div className="flex justify-between">
