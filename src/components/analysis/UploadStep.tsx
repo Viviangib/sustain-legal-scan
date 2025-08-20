@@ -13,17 +13,40 @@ import { AnalysisData } from '@/pages/Analysis';
 interface UploadStepProps {
   onNext: () => void;
   onDataUpdate: (data: Partial<AnalysisData>) => void;
+  lastAnalysisData?: AnalysisData | null;
 }
 
-export function UploadStep({ onNext, onDataUpdate }: UploadStepProps) {
+export function UploadStep({ onNext, onDataUpdate, lastAnalysisData }: UploadStepProps) {
   const [frameworkName, setFrameworkName] = useState('');
   const [version, setVersion] = useState('');
   const [publicationTime, setPublicationTime] = useState('');
   const [organization, setOrganization] = useState('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [showAutoFillOption, setShowAutoFillOption] = useState(!!lastAnalysisData);
   const { user } = useAuth();
   const { toast } = useToast();
+
+  const fillFromLastAnalysis = () => {
+    if (lastAnalysisData?.project) {
+      // Extract data from project description
+      const description = lastAnalysisData.project.description || '';
+      const frameworkMatch = description.match(/Framework: ([^|]+)/);
+      const versionMatch = description.match(/Version: ([^|]+)/);
+      const publishedMatch = description.match(/Published: ([^|]+)/);
+      const organizationMatch = description.match(/Organization: (.+)/);
+
+      if (frameworkMatch) setFrameworkName(frameworkMatch[1].trim());
+      if (versionMatch) setVersion(versionMatch[1].trim());
+      if (publishedMatch) setPublicationTime(publishedMatch[1].trim());
+      if (organizationMatch) setOrganization(organizationMatch[1].trim());
+    }
+    setShowAutoFillOption(false);
+    toast({
+      title: "Form filled",
+      description: "Previous analysis data has been loaded into the form.",
+    });
+  };
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -188,6 +211,30 @@ export function UploadStep({ onNext, onDataUpdate }: UploadStepProps) {
 
   return (
     <div className="space-y-6">
+      {/* Auto-fill option */}
+      {showAutoFillOption && (
+        <Card className="border-primary/20 bg-primary/5">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="font-medium">Use Previous Analysis Data</h3>
+                <p className="text-sm text-muted-foreground">
+                  Would you like to automatically fill the form with data from your last analysis?
+                </p>
+              </div>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" onClick={() => setShowAutoFillOption(false)}>
+                  No, thanks
+                </Button>
+                <Button size="sm" onClick={fillFromLastAnalysis}>
+                  Auto-fill
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       <Card>
         <CardHeader>
           <CardTitle>Sustainability Framework</CardTitle>
