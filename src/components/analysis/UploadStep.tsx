@@ -32,9 +32,14 @@ export function UploadStep({ onNext, onDataUpdate }: UploadStepProps) {
 
   useEffect(() => {
     const checkForPreviousAnalysis = async () => {
-      if (!user) return;
+      if (!user?.id) {
+        console.log('No user found for auto-fill check');
+        return;
+      }
 
       try {
+        console.log('Checking for previous analysis for user:', user.id);
+        
         // Get the most recent project with analysis results
         const { data: projects, error } = await supabase
           .from('projects')
@@ -43,7 +48,12 @@ export function UploadStep({ onNext, onDataUpdate }: UploadStepProps) {
           .order('created_at', { ascending: false })
           .limit(1);
 
-        if (error) throw error;
+        if (error) {
+          console.error('Error fetching projects:', error);
+          throw error;
+        }
+
+        console.log('Found projects:', projects);
 
         if (projects && projects.length > 0) {
           setPreviousAnalysisData(projects[0]);
@@ -56,18 +66,27 @@ export function UploadStep({ onNext, onDataUpdate }: UploadStepProps) {
             .order('created_at', { ascending: false })
             .limit(1);
 
+          console.log('Found documents:', documents);
+
           if (!docError && documents && documents.length > 0) {
             setPreviousDocument(documents[0]);
           }
           
           setShowAutoFillOption(true);
+          console.log('Auto-fill option enabled');
+        } else {
+          console.log('No previous projects found');
         }
       } catch (error) {
         console.error('Error checking for previous analysis:', error);
       }
     };
 
-    checkForPreviousAnalysis();
+    // Add a small delay to ensure user data is loaded
+    if (user) {
+      const timeoutId = setTimeout(checkForPreviousAnalysis, 100);
+      return () => clearTimeout(timeoutId);
+    }
   }, [user]);
 
   const fillFromLastAnalysis = (includeDocument = false) => {
