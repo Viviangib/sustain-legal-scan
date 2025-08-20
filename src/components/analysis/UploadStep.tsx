@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -396,10 +397,30 @@ export function UploadStep({ onNext, onDataUpdate }: UploadStepProps) {
                 <div className="flex items-center space-x-3">
                   <FileText className="h-8 w-8 text-primary" />
                   <div>
-                    <p className="font-medium">{selectedFile.name}</p>
+                    <div className="flex items-center gap-2">
+                      <p className="font-medium">{selectedFile.name}</p>
+                      {(selectedFile as any).isPreviousDocument && (
+                        <Badge variant="secondary" className="text-xs">
+                          From previous analysis
+                        </Badge>
+                      )}
+                    </div>
                     <p className="text-sm text-muted-foreground">
-                      {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
+                      {((selectedFile as any).isPreviousDocument 
+                        ? (selectedFile as any).size 
+                        : selectedFile.size
+                      ) / 1024 / 1024 < 0.01 
+                        ? '< 0.01 MB' 
+                        : ((((selectedFile as any).isPreviousDocument 
+                          ? (selectedFile as any).size 
+                          : selectedFile.size
+                        ) / 1024 / 1024).toFixed(2) + ' MB')}
                     </p>
+                    {(selectedFile as any).isPreviousDocument && (
+                      <p className="text-xs text-muted-foreground">
+                        This document will be reused from your previous analysis
+                      </p>
+                    )}
                   </div>
                 </div>
                 <Button variant="ghost" size="sm" onClick={removeFile}>
