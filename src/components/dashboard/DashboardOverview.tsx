@@ -20,9 +20,11 @@ import {
   Download,
   Calendar,
   Eye,
-  ExternalLink
+  ExternalLink,
+  FileSpreadsheet
 } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface RecentAnalysis {
   id: string;
@@ -404,28 +406,44 @@ Report generated on ${new Date().toLocaleString()}
                       <TableCell className="text-sm text-muted-foreground">
                         {analysis.results?.compliant_indicators || 0}/{analysis.results?.total_indicators || 0}
                       </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end space-x-2">
-                          <Button 
-                            size="sm" 
-                            variant="ghost" 
-                            onClick={() => downloadExcelReport(analysis)}
-                            className="h-8 w-8 p-0"
-                          >
-                            <Download className="h-4 w-4" />
-                            <span className="sr-only">Download Excel</span>
-                          </Button>
-                          <Button 
-                            size="sm" 
-                            variant="ghost" 
-                            onClick={() => downloadSummaryReport(analysis)}
-                            className="h-8 w-8 p-0"
-                          >
-                            <FileText className="h-4 w-4" />
-                            <span className="sr-only">Download Summary</span>
-                          </Button>
-                        </div>
-                      </TableCell>
+                       <TableCell className="text-right">
+                         <TooltipProvider>
+                           <div className="flex justify-end space-x-1">
+                             <Tooltip>
+                               <TooltipTrigger asChild>
+                                 <Button 
+                                   size="sm" 
+                                   variant="outline" 
+                                   onClick={() => downloadExcelReport(analysis)}
+                                   className="h-8 px-2"
+                                 >
+                                   <FileSpreadsheet className="h-4 w-4" />
+                                 </Button>
+                               </TooltipTrigger>
+                               <TooltipContent>
+                                 <p>Download Excel Report</p>
+                                 <p className="text-xs text-muted-foreground">Detailed indicator analysis with charts</p>
+                               </TooltipContent>
+                             </Tooltip>
+                             <Tooltip>
+                               <TooltipTrigger asChild>
+                                 <Button 
+                                   size="sm" 
+                                   variant="outline" 
+                                   onClick={() => downloadSummaryReport(analysis)}
+                                   className="h-8 px-2"
+                                 >
+                                   <FileText className="h-4 w-4" />
+                                 </Button>
+                               </TooltipTrigger>
+                               <TooltipContent>
+                                 <p>Download Summary Report</p>
+                                 <p className="text-xs text-muted-foreground">Text-based compliance summary</p>
+                               </TooltipContent>
+                             </Tooltip>
+                           </div>
+                         </TooltipProvider>
+                       </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
