@@ -158,7 +158,7 @@ export function UploadStep({ onNext, onDataUpdate }: UploadStepProps) {
           content_type: selectedFile.type,
           file_size: selectedFile.size,
           storage_path: uploadData.path,
-          upload_status: 'completed'
+          upload_status: 'uploaded'
         })
         .select()
         .single();
