@@ -18,8 +18,11 @@ import {
   Shield,
   FileCheck,
   Download,
-  Calendar
+  Calendar,
+  Eye,
+  ExternalLink
 } from 'lucide-react';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 interface RecentAnalysis {
   id: string;
@@ -31,9 +34,13 @@ interface RecentAnalysis {
   recommendations: string;
   projects: {
     name: string;
+    description?: string;
+    sustainability_framework?: string;
+    sustainability_version?: string;
   };
   legal_frameworks: {
     name: string;
+    version?: string;
   };
 }
 
@@ -61,7 +68,7 @@ export function DashboardOverview() {
         .from('analysis_results')
         .select(`
           *,
-          projects!inner(name, legal_framework_id)
+          projects!inner(name, description, legal_framework_id)
         `)
         .eq('user_id', user?.id)
         .eq('analysis_status', 'completed')
@@ -70,30 +77,43 @@ export function DashboardOverview() {
 
       if (error) throw error;
 
-      // Fetch legal frameworks separately for each analysis
+      // Fetch legal frameworks separately for each analysis and extract sustainability framework info
       const analysesWithFrameworks = await Promise.all(
         (analyses || []).map(async (analysis) => {
+          let legalFrameworkInfo = { name: 'Unknown Framework', version: 'N/A' };
+          
           if (analysis.projects?.legal_framework_id) {
             const { data: framework } = await supabase
               .from('legal_frameworks')
-              .select('name')
+              .select('name, version')
               .eq('id', analysis.projects.legal_framework_id)
-              .single();
+              .maybeSingle();
             
-            return {
-              ...analysis,
-              legal_frameworks: {
-                name: framework?.name || 'Unknown Framework'
-              }
-            };
-          } else {
-            return {
-              ...analysis,
-              legal_frameworks: {
-                name: 'Unknown Framework'
-              }
-            };
+            if (framework) {
+              legalFrameworkInfo = {
+                name: framework.name,
+                version: framework.version || 'N/A'
+              };
+            }
           }
+
+          // Extract sustainability framework info from project description
+          const description = analysis.projects?.description || '';
+          const frameworkMatch = description.match(/Framework: ([^|]+)/);
+          const versionMatch = description.match(/Version: ([^|]+)/);
+          
+          const sustainabilityFramework = frameworkMatch ? frameworkMatch[1].trim() : 'N/A';
+          const sustainabilityVersion = versionMatch ? versionMatch[1].trim() : 'N/A';
+          
+          return {
+            ...analysis,
+            projects: {
+              ...analysis.projects,
+              sustainability_framework: sustainabilityFramework,
+              sustainability_version: sustainabilityVersion
+            },
+            legal_frameworks: legalFrameworkInfo
+          };
         })
       );
 
@@ -307,9 +327,19 @@ Report generated on ${new Date().toLocaleString()}
 
       {/* Recent Activity */}
       <Card>
-        <CardHeader>
-          <CardTitle>Recent Analyses</CardTitle>
-          <CardDescription>Your latest sustainability framework analyses</CardDescription>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div>
+            <CardTitle>Recent Analyses</CardTitle>
+            <CardDescription>Your latest sustainability framework analyses</CardDescription>
+          </div>
+          {recentAnalyses.length > 0 && (
+            <Link to="/analyses">
+              <Button variant="outline" size="sm">
+                <Eye className="h-4 w-4 mr-2" />
+                View All Analyses
+              </Button>
+            </Link>
+          )}
         </CardHeader>
         <CardContent>
           {loading ? (
@@ -328,56 +358,78 @@ Report generated on ${new Date().toLocaleString()}
               <p className="text-sm">Create your first analysis to get started</p>
             </div>
           ) : (
-            <div className="space-y-4">
-              {recentAnalyses.map((analysis) => (
-                <div key={analysis.id} className="border rounded-lg p-4 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <h4 className="font-medium">{analysis.projects?.name}</h4>
-                      <p className="text-sm text-muted-foreground">
-                        {analysis.legal_frameworks?.name}
-                      </p>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Badge className={getComplianceColor(analysis.compliance_score)}>
-                        {analysis.compliance_score}% Compliance
-                      </Badge>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center space-x-4 text-sm text-muted-foreground">
-                    <div className="flex items-center space-x-1">
-                      <Calendar className="h-4 w-4" />
-                      <span>{new Date(analysis.created_at).toLocaleDateString()}</span>
-                    </div>
-                    <div className="flex items-center space-x-1">
-                      <CheckCircle className="h-4 w-4" />
-                      <span>{analysis.results?.compliant_indicators || 0}/{analysis.results?.total_indicators || 0} indicators</span>
-                    </div>
-                  </div>
-                  
-                  <div className="flex space-x-2">
-                    <Button 
-                      size="sm" 
-                      variant="outline" 
-                      onClick={() => downloadExcelReport(analysis)}
-                      className="flex-1"
-                    >
-                      <Download className="h-4 w-4 mr-2" />
-                      Excel Report
-                    </Button>
-                    <Button 
-                      size="sm" 
-                      variant="outline" 
-                      onClick={() => downloadSummaryReport(analysis)}
-                      className="flex-1"
-                    >
-                      <Download className="h-4 w-4 mr-2" />
-                      Summary Report
-                    </Button>
-                  </div>
-                </div>
-              ))}
+            <div className="rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Project</TableHead>
+                    <TableHead>Sustainability Framework</TableHead>
+                    <TableHead>Legal Framework</TableHead>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Compliance</TableHead>
+                    <TableHead>Indicators</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {recentAnalyses.map((analysis) => (
+                    <TableRow key={analysis.id}>
+                      <TableCell className="font-medium">
+                        {analysis.projects?.name}
+                      </TableCell>
+                      <TableCell>
+                        <div className="text-sm">
+                          <div>{analysis.projects?.sustainability_framework}</div>
+                          <div className="text-muted-foreground text-xs">
+                            v{analysis.projects?.sustainability_version}
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="text-sm">
+                          <div>{analysis.legal_frameworks?.name}</div>
+                          <div className="text-muted-foreground text-xs">
+                            v{analysis.legal_frameworks?.version}
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {new Date(analysis.created_at).toLocaleDateString()}
+                      </TableCell>
+                      <TableCell>
+                        <Badge className={getComplianceColor(analysis.compliance_score)}>
+                          {analysis.compliance_score}%
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {analysis.results?.compliant_indicators || 0}/{analysis.results?.total_indicators || 0}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end space-x-2">
+                          <Button 
+                            size="sm" 
+                            variant="ghost" 
+                            onClick={() => downloadExcelReport(analysis)}
+                            className="h-8 w-8 p-0"
+                          >
+                            <Download className="h-4 w-4" />
+                            <span className="sr-only">Download Excel</span>
+                          </Button>
+                          <Button 
+                            size="sm" 
+                            variant="ghost" 
+                            onClick={() => downloadSummaryReport(analysis)}
+                            className="h-8 w-8 p-0"
+                          >
+                            <FileText className="h-4 w-4" />
+                            <span className="sr-only">Download Summary</span>
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             </div>
           )}
         </CardContent>
