@@ -119,37 +119,51 @@ Report generated on ${new Date().toLocaleString()}
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="h-80">
-            <ResponsiveContainer width="100%" height="100%">
-              <RechartsPieChart>
-                <Pie
-                  data={alignmentData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={60}
-                  outerRadius={120}
-                  paddingAngle={2}
-                  dataKey="value"
-                >
-                  {alignmentData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip 
-                  formatter={(value, name) => [`${value} indicators`, name]}
-                  labelStyle={{ color: '#000' }}
-                />
-                <Legend 
-                  verticalAlign="bottom" 
-                  height={36}
-                  formatter={(value, entry) => (
-                    <span style={{ color: entry.color }}>
-                      {value}: {alignmentData.find(item => item.name === value)?.value || 0}
-                    </span>
-                  )}
-                />
-              </RechartsPieChart>
-            </ResponsiveContainer>
+          <div className="h-80 flex">
+            <div className="flex-1">
+              <ResponsiveContainer width="100%" height="100%">
+                <RechartsPieChart>
+                  <Pie
+                    data={alignmentData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={60}
+                    outerRadius={120}
+                    paddingAngle={2}
+                    dataKey="value"
+                  >
+                    {alignmentData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip 
+                    formatter={(value, name) => {
+                      const total = alignmentData.reduce((sum, item) => sum + item.value, 0);
+                      const percentage = total > 0 ? ((value as number / total) * 100).toFixed(1) : '0.0';
+                      return [`${value} indicators (${percentage}%)`, name];
+                    }}
+                    labelStyle={{ color: '#000' }}
+                  />
+                  <Legend 
+                    verticalAlign="middle" 
+                    align="right"
+                    layout="vertical"
+                    iconType="circle"
+                    wrapperStyle={{ paddingLeft: '20px' }}
+                    formatter={(value, entry) => {
+                      const item = alignmentData.find(item => item.name === value);
+                      const total = alignmentData.reduce((sum, item) => sum + item.value, 0);
+                      const percentage = total > 0 && item ? ((item.value / total) * 100).toFixed(1) : '0.0';
+                      return (
+                        <span style={{ color: entry.color, fontSize: '14px' }}>
+                          {value}: {item?.value || 0} ({percentage}%)
+                        </span>
+                      );
+                    }}
+                  />
+                </RechartsPieChart>
+              </ResponsiveContainer>
+            </div>
           </div>
         </CardContent>
       </Card>
