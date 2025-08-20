@@ -377,14 +377,11 @@ Report generated on ${new Date().toLocaleString()}
                   {recentAnalyses.map((analysis) => (
                     <TableRow key={analysis.id}>
                       <TableCell className="font-medium">
-                        {analysis.projects?.name}
+                        {analysis.projects?.description?.split('|')[0]?.replace('Project Name: ', '') || 'Unnamed Project'}
                       </TableCell>
                       <TableCell>
                         <div className="text-sm">
-                          <div>{analysis.projects?.sustainability_framework}</div>
-                          <div className="text-muted-foreground text-xs">
-                            v{analysis.projects?.sustainability_version}
-                          </div>
+                          <div>{analysis.projects?.sustainability_framework} {analysis.projects?.sustainability_version && `(${analysis.projects?.sustainability_version})`}</div>
                         </div>
                       </TableCell>
                       <TableCell>
