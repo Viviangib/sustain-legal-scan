@@ -114,7 +114,7 @@ const Analysis = () => {
       case 4:
         return <AnalysisStep onNext={nextStep} onPrevious={previousStep} onDataUpdate={updateAnalysisData} data={analysisData} />;
       case 5:
-        return <ResultsStep data={analysisData} onStartNew={startNewAnalysis} onSelectAnotherFramework={selectAnotherFramework} />;
+        return <ResultsStep data={analysisData} onStartNew={startNewAnalysis} />;
       default:
         return null;
     }
