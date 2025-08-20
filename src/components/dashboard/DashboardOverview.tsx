@@ -286,10 +286,10 @@ Report generated on ${new Date().toLocaleString()}
           <div className="flex flex-col lg:flex-row items-center justify-between gap-6">
             <div className="flex-1 text-center lg:text-left">
               <h2 className="text-2xl font-bold text-foreground mb-2">
-                Ready to analyze your sustainability documents?
+                Ready to analyse your sustainability frameworks?
               </h2>
               <p className="text-muted-foreground mb-4 max-w-2xl">
-                Upload your sustainability reports and get comprehensive compliance analysis against legal frameworks like CS3D, EUDR, CSRD, and SFDR. Identify gaps and receive actionable recommendations.
+                Upload relevant documents and get comprehensive indicator analysis against legal frameworks like CS3D, EUDR, CSRD, and SFDR.
               </p>
               <div className="flex flex-wrap justify-center lg:justify-start gap-4 text-sm text-muted-foreground">
                 <div className="flex items-center gap-2">
