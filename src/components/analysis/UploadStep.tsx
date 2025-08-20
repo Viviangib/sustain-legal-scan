@@ -24,6 +24,7 @@ export function UploadStep({ onNext, onDataUpdate }: UploadStepProps) {
   const [uploading, setUploading] = useState(false);
   const [showAutoFillOption, setShowAutoFillOption] = useState(false);
   const [previousAnalysisData, setPreviousAnalysisData] = useState<any>(null);
+  const [previousDocument, setPreviousDocument] = useState<any>(null);
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -44,6 +45,19 @@ export function UploadStep({ onNext, onDataUpdate }: UploadStepProps) {
 
         if (projects && projects.length > 0) {
           setPreviousAnalysisData(projects[0]);
+          
+          // Get the most recent document for this project
+          const { data: documents, error: docError } = await supabase
+            .from('documents')
+            .select('*')
+            .eq('project_id', projects[0].id)
+            .order('created_at', { ascending: false })
+            .limit(1);
+
+          if (!docError && documents && documents.length > 0) {
+            setPreviousDocument(documents[0]);
+          }
+          
           setShowAutoFillOption(true);
         }
       } catch (error) {
@@ -54,7 +68,7 @@ export function UploadStep({ onNext, onDataUpdate }: UploadStepProps) {
     checkForPreviousAnalysis();
   }, [user]);
 
-  const fillFromLastAnalysis = () => {
+  const fillFromLastAnalysis = (includeDocument = false) => {
     if (previousAnalysisData) {
       // Extract data from project description
       const description = previousAnalysisData.description || '';
@@ -67,11 +81,25 @@ export function UploadStep({ onNext, onDataUpdate }: UploadStepProps) {
       if (versionMatch) setVersion(versionMatch[1].trim());
       if (publishedMatch) setPublicationTime(publishedMatch[1].trim());
       if (organizationMatch) setOrganization(organizationMatch[1].trim());
+
+      // If user wants to include document, create a mock file object
+      if (includeDocument && previousDocument) {
+        const mockFile = new File([''], previousDocument.original_filename, {
+          type: previousDocument.content_type,
+        });
+        // Add custom properties to track it's from previous analysis
+        (mockFile as any).isPreviousDocument = true;
+        (mockFile as any).documentId = previousDocument.id;
+        (mockFile as any).size = previousDocument.file_size;
+        setSelectedFile(mockFile);
+      }
     }
     setShowAutoFillOption(false);
     toast({
       title: "Form filled",
-      description: "Previous analysis data has been loaded into the form.",
+      description: includeDocument 
+        ? "Previous analysis data and document have been loaded."
+        : "Previous analysis data has been loaded into the form.",
     });
   };
 
@@ -187,33 +215,48 @@ export function UploadStep({ onNext, onDataUpdate }: UploadStepProps) {
 
       if (projectError) throw projectError;
 
-      // Upload file to storage
-      const fileExt = selectedFile.name.split('.').pop();
-      const fileName = `${user.id}/${project.id}/${Date.now()}.${fileExt}`;
-      
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('documents')
-        .upload(fileName, selectedFile);
+      // Upload file to storage or reuse previous document
+      let uploadData;
+      let document;
 
-      if (uploadError) throw uploadError;
+      if (selectedFile && (selectedFile as any).isPreviousDocument) {
+        // Reuse previous document
+        document = previousDocument;
+        toast({
+          title: "Using previous document",
+          description: "Reusing document from your last analysis.",
+        });
+      } else {
+        // Upload new file to storage
+        const fileExt = selectedFile.name.split('.').pop();
+        const fileName = `${user.id}/${project.id}/${Date.now()}.${fileExt}`;
+        
+        const { data: newUploadData, error: uploadError } = await supabase.storage
+          .from('documents')
+          .upload(fileName, selectedFile);
 
-      // Create document record
-      const { data: document, error: documentError } = await supabase
-        .from('documents')
-        .insert({
-          project_id: project.id,
-          user_id: user.id,
-          filename: selectedFile.name,
-          original_filename: selectedFile.name,
-          content_type: selectedFile.type,
-          file_size: selectedFile.size,
-          storage_path: uploadData.path,
-          upload_status: 'uploaded'
-        })
-        .select()
-        .single();
+        if (uploadError) throw uploadError;
+        uploadData = newUploadData;
 
-      if (documentError) throw documentError;
+        // Create document record
+        const { data: newDocument, error: documentError } = await supabase
+          .from('documents')
+          .insert({
+            project_id: project.id,
+            user_id: user.id,
+            filename: selectedFile.name,
+            original_filename: selectedFile.name,
+            content_type: selectedFile.type,
+            file_size: selectedFile.size,
+            storage_path: uploadData.path,
+            upload_status: 'uploaded'
+          })
+          .select()
+          .single();
+
+        if (documentError) throw documentError;
+        document = newDocument;
+      }
 
       // Update analysis data
       onDataUpdate({ project, document });
@@ -242,21 +285,31 @@ export function UploadStep({ onNext, onDataUpdate }: UploadStepProps) {
       {showAutoFillOption && (
         <Card className="border-primary/20 bg-primary/5">
           <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
+            <div className="space-y-4">
               <div>
                 <h3 className="font-medium">Use Previous Analysis Data</h3>
                 <p className="text-sm text-muted-foreground">
                   Would you like to automatically fill the form with data from your last analysis?
                 </p>
               </div>
-              <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row gap-2">
                 <Button variant="outline" size="sm" onClick={() => setShowAutoFillOption(false)}>
                   No, thanks
                 </Button>
-                <Button size="sm" onClick={fillFromLastAnalysis}>
-                  Auto-fill
+                <Button size="sm" onClick={() => fillFromLastAnalysis(false)}>
+                  Auto-fill form only
                 </Button>
+                {previousDocument && (
+                  <Button size="sm" onClick={() => fillFromLastAnalysis(true)}>
+                    Auto-fill + Use last document
+                  </Button>
+                )}
               </div>
+              {previousDocument && (
+                <p className="text-xs text-muted-foreground">
+                  Last document: {previousDocument.original_filename}
+                </p>
+              )}
             </div>
           </CardContent>
         </Card>
