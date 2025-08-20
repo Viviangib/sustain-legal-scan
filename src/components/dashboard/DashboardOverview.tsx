@@ -364,7 +364,6 @@ Report generated on ${new Date().toLocaleString()}
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Project</TableHead>
                     <TableHead>Sustainability Framework</TableHead>
                     <TableHead>Legal Framework</TableHead>
                     <TableHead>Date</TableHead>
@@ -376,9 +375,6 @@ Report generated on ${new Date().toLocaleString()}
                 <TableBody>
                   {recentAnalyses.map((analysis) => (
                     <TableRow key={analysis.id}>
-                      <TableCell className="font-medium">
-                        {analysis.projects?.description?.split('|')[0]?.replace('Project Name: ', '') || 'Unnamed Project'}
-                      </TableCell>
                       <TableCell>
                         <div className="text-sm">
                           <div>{analysis.projects?.sustainability_framework} {analysis.projects?.sustainability_version && `(${analysis.projects?.sustainability_version})`}</div>

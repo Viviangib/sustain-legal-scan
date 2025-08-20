@@ -407,17 +407,6 @@ Report generated on ${new Date().toLocaleString()}
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead 
-                          className="cursor-pointer hover:bg-muted/50"
-                          onClick={() => handleSort('project_name')}
-                        >
-                          <div className="flex items-center space-x-1">
-                            <span>Project</span>
-                            {sortField === 'project_name' && (
-                              sortOrder === 'asc' ? <SortAsc className="h-4 w-4" /> : <SortDesc className="h-4 w-4" />
-                            )}
-                          </div>
-                        </TableHead>
                         <TableHead>Sustainability Framework</TableHead>
                         <TableHead>Legal Framework</TableHead>
                         <TableHead 
@@ -450,9 +439,6 @@ Report generated on ${new Date().toLocaleString()}
                     <TableBody>
                       {filteredAnalyses.map((analysis) => (
                         <TableRow key={analysis.id}>
-                          <TableCell className="font-medium">
-                            {analysis.projects?.description?.split('|')[0]?.replace('Project Name: ', '') || 'Unnamed Project'}
-                          </TableCell>
                           <TableCell>
                             <div className="text-sm">
                               <div>{analysis.projects?.sustainability_framework} {analysis.projects?.sustainability_version && `(${analysis.projects?.sustainability_version})`}</div>
