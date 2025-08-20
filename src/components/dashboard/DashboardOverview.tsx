@@ -421,7 +421,7 @@ Report generated on ${new Date().toLocaleString()}
                                  </Button>
                                </TooltipTrigger>
                                <TooltipContent>
-                                 <p>Download detailed indicator analysis (EXCEL)</p>
+                                 <p>Download indicator analysis (EXCEL)</p>
                                </TooltipContent>
                              </Tooltip>
                              <Tooltip>
