@@ -84,11 +84,15 @@ export function AllAnalyses() {
         (analyses || []).map(async (analysis) => {
           let legalFrameworkInfo = { name: 'Unknown Framework', version: 'N/A' };
           
-          if (analysis.projects?.legal_framework_id) {
+          // Extract legal_framework_id from analysis input_parameters
+          const inputParams = analysis.input_parameters as any;
+          const legalFrameworkId = inputParams?.legal_framework_id;
+          
+          if (legalFrameworkId) {
             const { data: framework } = await supabase
               .from('legal_frameworks')
               .select('name, version')
-              .eq('id', analysis.projects.legal_framework_id)
+              .eq('id', legalFrameworkId)
               .maybeSingle();
             
             if (framework) {
