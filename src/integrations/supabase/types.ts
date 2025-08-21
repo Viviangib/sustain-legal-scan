@@ -19,18 +19,21 @@ export type Database = {
           created_at: string
           id: number
           legal_framework: Json | null
+          user_id: string
           vss_framework: string | null
         }
         Insert: {
           created_at?: string
           id?: number
           legal_framework?: Json | null
+          user_id: string
           vss_framework?: string | null
         }
         Update: {
           created_at?: string
           id?: number
           legal_framework?: Json | null
+          user_id?: string
           vss_framework?: string | null
         }
         Relationships: []
