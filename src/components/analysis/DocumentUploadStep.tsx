@@ -432,7 +432,7 @@ export function DocumentUploadStep({ onNext, onPrevious, onDataUpdate, data }: D
             <div className="flex items-center gap-3">
               <FileSpreadsheet className="h-5 w-5 text-primary" />
               <div>
-                <span className="font-medium">{uploadedFileInfo.name}</span>
+                <span>{uploadedFileInfo.name}</span>
                 <span className="text-muted-foreground ml-2">{formatFileSize(uploadedFileInfo.size)}</span>
               </div>
             </div>
