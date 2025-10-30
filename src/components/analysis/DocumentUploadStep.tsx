@@ -485,6 +485,9 @@ export function DocumentUploadStep({ onNext, onPrevious, onDataUpdate, data }: D
           <Button onClick={onPrevious} variant="outline" className="flex-1">
             Previous Step
           </Button>
+          <Button onClick={onNext} className="flex-1">
+            Next Step
+          </Button>
         </div>
       </CardContent>
     </Card>
