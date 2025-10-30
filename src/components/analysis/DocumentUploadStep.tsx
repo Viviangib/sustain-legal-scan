@@ -408,7 +408,7 @@ export function DocumentUploadStep({ onNext, onPrevious, onDataUpdate, data }: D
           <Info className="h-4 w-4" />
           <AlertDescription>
             <div>
-              <strong>Excel file requirements:</strong>
+              <strong>Requirements:</strong>
               <ul className="list-disc pl-5 mt-2 space-y-1">
                 <li>Put headers in row 1.</li>
                 <li>Include columns <strong>"ID"</strong> and <strong>"Indicator text"</strong>.</li>
