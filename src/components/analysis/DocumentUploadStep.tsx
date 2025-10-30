@@ -99,7 +99,10 @@ export function DocumentUploadStep({ onNext, onPrevious, onDataUpdate, data }: D
       const buffer = await file.arrayBuffer();
       const workbook = XLSX.read(buffer, { type: 'array' });
       const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-      const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1, defval: '' }) as any[][];
+      const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1, defval: '', blankrows: false }) as any[][];
+
+      console.log('Excel parsed - Total rows:', jsonData.length);
+      console.log('First row (headers):', jsonData[0]);
 
       if (jsonData.length === 0) {
         toast({
@@ -119,18 +122,52 @@ export function DocumentUploadStep({ onNext, onPrevious, onDataUpdate, data }: D
         return;
       }
 
-      const headers = jsonData[0].map(h => String(h).trim());
+      // Process headers: handle empty/duplicate names
+      const rawHeaders = jsonData[0].map(h => String(h).trim());
+      const headers: string[] = [];
+      const headerCounts = new Map<string, number>();
+
+      rawHeaders.forEach((header, idx) => {
+        let cleanHeader = header || `Column_${idx + 1}`;
+        
+        // Make duplicates unique
+        if (headerCounts.has(cleanHeader)) {
+          const count = headerCounts.get(cleanHeader)! + 1;
+          headerCounts.set(cleanHeader, count);
+          cleanHeader = `${cleanHeader}_${count}`;
+        } else {
+          headerCounts.set(cleanHeader, 1);
+        }
+        
+        headers.push(cleanHeader);
+      });
+
+      console.log('Processed headers:', headers);
+
       const dataRows = jsonData.slice(1).filter(row => row.some(cell => cell !== ''));
+      console.log('Data rows after filtering:', dataRows.length);
+
+      if (dataRows.length === 0) {
+        toast({
+          variant: "destructive",
+          title: "No data found",
+          description: "The Excel file has headers but no data rows.",
+        });
+        return;
+      }
 
       setColumnHeaders(headers);
       setRawData(dataRows);
 
       // Try auto-mapping
       const autoMapping = autoDetectColumns(headers);
+      console.log('Auto-detected mapping:', autoMapping);
+      
       if (autoMapping.indicator_id && autoMapping.indicator_text) {
         setColumnMapping(autoMapping);
         applyMapping(headers, dataRows, autoMapping);
       } else {
+        console.log('Auto-mapping failed, showing manual mapping UI');
         setShowMapping(true);
       }
     } catch (error) {
