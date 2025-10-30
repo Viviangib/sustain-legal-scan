@@ -473,7 +473,7 @@ export function DocumentUploadStep({ onNext, onPrevious, onDataUpdate, data }: D
                     key={selectedFile?.name || 'excel-input'}
                   />
                   <Label htmlFor="excelInput">
-                    <Button variant="outline" className="w-full" asChild disabled={isProcessing}>
+                    <Button variant="outline" className="w-full bg-primary/20 hover:bg-primary/30 border-primary/30" asChild disabled={isProcessing}>
                       <span>
                         <Upload className="mr-2 h-4 w-4" />
                         Upload an indicator file (Excel)
