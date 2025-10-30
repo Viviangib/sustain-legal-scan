@@ -6,12 +6,12 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
-import { Upload, FileSpreadsheet, FileText, AlertCircle, CheckCircle, ChevronDown, ChevronUp, X } from 'lucide-react';
+import { Upload, FileSpreadsheet, FileText, AlertCircle, CheckCircle, X, Info } from 'lucide-react';
 import { AnalysisData } from '@/pages/Analysis';
 import * as XLSX from 'xlsx';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 interface NormalizedIndicator {
   indicator_id: string;
@@ -39,16 +39,14 @@ export function DocumentUploadStep({ onNext, onPrevious, onDataUpdate, data }: D
   const [uploadMode, setUploadMode] = useState<'none' | 'excel' | 'document'>('none');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [rawData, setRawData] = useState<any[]>([]);
+  const [allRows, setAllRows] = useState<any[][]>([]);
   const [columnHeaders, setColumnHeaders] = useState<string[]>([]);
-  const [showMapping, setShowMapping] = useState(false);
-  const [showAdvancedMapping, setShowAdvancedMapping] = useState(false);
+  const [showFixDialog, setShowFixDialog] = useState(false);
+  const [useCustomHeaderRow, setUseCustomHeaderRow] = useState(false);
+  const [customHeaderRowNum, setCustomHeaderRowNum] = useState(2);
   const [columnMapping, setColumnMapping] = useState({
     indicator_id: '',
-    indicator_text: '',
-    category: '',
-    subcategory: '',
-    source: '',
-    notes: ''
+    indicator_text: ''
   });
   const [indicators, setIndicators] = useState<NormalizedIndicator[]>([]);
   const [validationIssues, setValidationIssues] = useState<ValidationIssue[]>([]);
@@ -57,7 +55,6 @@ export function DocumentUploadStep({ onNext, onPrevious, onDataUpdate, data }: D
   const { user } = useAuth();
   const { toast } = useToast();
 
-  // Restore state when navigating back
   useEffect(() => {
     if (data.document?.indicators) {
       setIndicators(data.document.indicators);
@@ -65,11 +62,28 @@ export function DocumentUploadStep({ onNext, onPrevious, onDataUpdate, data }: D
     }
   }, [data.document]);
 
+  const normalizeHeaderName = (header: string): string => {
+    return header.toLowerCase().trim().replace(/\s+/g, ' ');
+  };
+
+  const hasRequiredHeaders = (headers: string[]): { hasId: boolean; hasText: boolean; idCol: string; textCol: string } => {
+    const normalized = headers.map(h => normalizeHeaderName(h));
+    
+    const idIndex = normalized.findIndex(h => h === 'id' || h === 'indicator id');
+    const textIndex = normalized.findIndex(h => h === 'indicator text');
+    
+    return {
+      hasId: idIndex !== -1,
+      hasText: textIndex !== -1,
+      idCol: idIndex !== -1 ? headers[idIndex] : '',
+      textCol: textIndex !== -1 ? headers[textIndex] : ''
+    };
+  };
+
   const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>, mode: 'excel' | 'document') => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    // Validate file size
     if (file.size > 10 * 1024 * 1024) {
       toast({
         variant: "destructive",
@@ -85,6 +99,7 @@ export function DocumentUploadStep({ onNext, onPrevious, onDataUpdate, data }: D
     setColumnHeaders([]);
     setIndicators([]);
     setValidationIssues([]);
+    setShowFixDialog(false);
 
     if (mode === 'excel') {
       await parseExcelFile(file);
@@ -101,9 +116,6 @@ export function DocumentUploadStep({ onNext, onPrevious, onDataUpdate, data }: D
       const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
       const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1, defval: '', blankrows: false }) as any[][];
 
-      console.log('Excel parsed - Total rows:', jsonData.length);
-      console.log('First row (headers):', jsonData[0]);
-
       if (jsonData.length === 0) {
         toast({
           variant: "destructive",
@@ -113,40 +125,32 @@ export function DocumentUploadStep({ onNext, onPrevious, onDataUpdate, data }: D
         return;
       }
 
-      if (jsonData.length > 10001) { // +1 for header
+      if (jsonData.length > 10001) {
         toast({
           variant: "destructive",
           title: "Too many rows",
-          description: "Maximum 10,000 indicators allowed. File has more rows.",
+          description: "Maximum 10,000 indicators allowed.",
         });
         return;
       }
 
-      // Process headers: handle empty/duplicate names
-      const rawHeaders = jsonData[0].map(h => String(h).trim());
-      const headers: string[] = [];
-      const headerCounts = new Map<string, number>();
+      setAllRows(jsonData);
 
-      rawHeaders.forEach((header, idx) => {
-        let cleanHeader = header || `Column_${idx + 1}`;
-        
-        // Make duplicates unique
-        if (headerCounts.has(cleanHeader)) {
-          const count = headerCounts.get(cleanHeader)! + 1;
-          headerCounts.set(cleanHeader, count);
-          cleanHeader = `${cleanHeader}_${count}`;
-        } else {
-          headerCounts.set(cleanHeader, 1);
-        }
-        
-        headers.push(cleanHeader);
-      });
+      const headers = jsonData[0].map(h => String(h).trim()).filter(h => h !== '');
+      const validation = hasRequiredHeaders(headers);
 
-      console.log('Processed headers:', headers);
+      if (!validation.hasId || !validation.hasText) {
+        setColumnHeaders(headers);
+        const dataRows = jsonData.slice(1).filter(row => row.some(cell => cell !== ''));
+        setRawData(dataRows);
+        setShowFixDialog(true);
+        return;
+      }
 
+      // Valid headers found - process data
+      setColumnHeaders(headers);
       const dataRows = jsonData.slice(1).filter(row => row.some(cell => cell !== ''));
-      console.log('Data rows after filtering:', dataRows.length);
-
+      
       if (dataRows.length === 0) {
         toast({
           variant: "destructive",
@@ -156,20 +160,8 @@ export function DocumentUploadStep({ onNext, onPrevious, onDataUpdate, data }: D
         return;
       }
 
-      setColumnHeaders(headers);
       setRawData(dataRows);
-
-      // Try auto-mapping
-      const autoMapping = autoDetectColumns(headers);
-      console.log('Auto-detected mapping:', autoMapping);
-      
-      if (autoMapping.indicator_id && autoMapping.indicator_text) {
-        setColumnMapping(autoMapping);
-        applyMapping(headers, dataRows, autoMapping);
-      } else {
-        console.log('Auto-mapping failed, showing manual mapping UI');
-        setShowMapping(true);
-      }
+      processValidData(headers, dataRows, validation.idCol, validation.textCol);
     } catch (error) {
       console.error('Excel parsing error:', error);
       toast({
@@ -182,63 +174,18 @@ export function DocumentUploadStep({ onNext, onPrevious, onDataUpdate, data }: D
     }
   };
 
-  const autoDetectColumns = (headers: string[]): typeof columnMapping => {
-    const mapping = {
-      indicator_id: '',
-      indicator_text: '',
-      category: '',
-      subcategory: '',
-      source: '',
-      notes: ''
-    };
+  const processValidData = (headers: string[], dataRows: any[][], idCol: string, textCol: string) => {
+    const idIdx = headers.indexOf(idCol);
+    const textIdx = headers.indexOf(textCol);
+    
+    // Look for optional columns (case-insensitive)
+    const normalized = headers.map(h => normalizeHeaderName(h));
+    const categoryIdx = normalized.findIndex(h => h === 'category');
+    const subcategoryIdx = normalized.findIndex(h => h === 'subcategory');
+    const sourceIdx = normalized.findIndex(h => h === 'source');
+    const notesIdx = normalized.findIndex(h => h === 'notes');
 
-    const lowerHeaders = headers.map(h => h.toLowerCase());
-
-    // Detect ID column
-    const idPatterns = ['indicator_id', 'id', 'indicator id', 'code', 'indicator code', 'ref'];
-    for (const pattern of idPatterns) {
-      const idx = lowerHeaders.findIndex(h => h.includes(pattern));
-      if (idx !== -1) {
-        mapping.indicator_id = headers[idx];
-        break;
-      }
-    }
-
-    // Detect text/description column
-    const textPatterns = ['indicator_text', 'text', 'indicator text', 'description', 'indicator', 'title', 'name'];
-    for (const pattern of textPatterns) {
-      const idx = lowerHeaders.findIndex(h => h.includes(pattern));
-      if (idx !== -1) {
-        mapping.indicator_text = headers[idx];
-        break;
-      }
-    }
-
-    // Detect optional columns
-    const categoryIdx = lowerHeaders.findIndex(h => h.includes('category') && !h.includes('sub'));
-    if (categoryIdx !== -1) mapping.category = headers[categoryIdx];
-
-    const subcategoryIdx = lowerHeaders.findIndex(h => h.includes('subcategory') || h.includes('sub-category') || h.includes('sub category'));
-    if (subcategoryIdx !== -1) mapping.subcategory = headers[subcategoryIdx];
-
-    const sourceIdx = lowerHeaders.findIndex(h => h.includes('source'));
-    if (sourceIdx !== -1) mapping.source = headers[sourceIdx];
-
-    const notesIdx = lowerHeaders.findIndex(h => h.includes('note') || h.includes('comment') || h.includes('remark'));
-    if (notesIdx !== -1) mapping.notes = headers[notesIdx];
-
-    return mapping;
-  };
-
-  const applyMapping = (headers: string[], dataRows: any[][], mapping: typeof columnMapping) => {
-    const idIdx = headers.indexOf(mapping.indicator_id);
-    const textIdx = headers.indexOf(mapping.indicator_text);
-    const categoryIdx = mapping.category ? headers.indexOf(mapping.category) : -1;
-    const subcategoryIdx = mapping.subcategory ? headers.indexOf(mapping.subcategory) : -1;
-    const sourceIdx = mapping.source ? headers.indexOf(mapping.source) : -1;
-    const notesIdx = mapping.notes ? headers.indexOf(mapping.notes) : -1;
-
-    const normalized: NormalizedIndicator[] = dataRows.map(row => ({
+    const indicators: NormalizedIndicator[] = dataRows.map(row => ({
       indicator_id: String(row[idIdx] || '').trim(),
       indicator_text: String(row[textIdx] || '').trim(),
       category: categoryIdx !== -1 ? String(row[categoryIdx] || '').trim() : '',
@@ -247,36 +194,40 @@ export function DocumentUploadStep({ onNext, onPrevious, onDataUpdate, data }: D
       notes: notesIdx !== -1 ? String(row[notesIdx] || '').trim() : ''
     }));
 
-    setIndicators(normalized);
-    validateIndicators(normalized);
-    setShowMapping(false);
+    setIndicators(indicators);
+    validateIndicators(indicators);
   };
 
   const validateIndicators = (indicatorsList: NormalizedIndicator[]) => {
     const issues: ValidationIssue[] = [];
-    const seenIds = new Set<string>();
-    let duplicateCount = 0;
-    let emptyIdCount = 0;
-    let emptyTextCount = 0;
+    const seenIds = new Map<string, number>();
+    const duplicates: number[] = [];
 
     indicatorsList.forEach((ind, idx) => {
+      // Check for empty ID (blocking)
       if (!ind.indicator_id) {
-        emptyIdCount++;
-        issues.push({ type: 'error', message: `Row ${idx + 1}: Empty Indicator ID`, rowIndex: idx });
-      } else if (seenIds.has(ind.indicator_id)) {
-        duplicateCount++;
+        issues.push({ type: 'error', message: `Row ${idx + 2}: Empty Indicator ID`, rowIndex: idx });
       } else {
-        seenIds.add(ind.indicator_id);
+        // Track duplicates
+        if (seenIds.has(ind.indicator_id)) {
+          duplicates.push(idx);
+          const firstOccurrence = seenIds.get(ind.indicator_id)!;
+          if (!duplicates.includes(firstOccurrence)) {
+            duplicates.push(firstOccurrence);
+          }
+        } else {
+          seenIds.set(ind.indicator_id, idx);
+        }
       }
 
+      // Check for empty or short indicator text (blocking)
       if (!ind.indicator_text || ind.indicator_text.length < 3) {
-        emptyTextCount++;
-        issues.push({ type: 'error', message: `Row ${idx + 1}: Indicator text too short (min 3 chars)`, rowIndex: idx });
+        issues.push({ type: 'error', message: `Row ${idx + 2}: Indicator text too short (min 3 chars)`, rowIndex: idx });
       }
     });
 
-    if (duplicateCount > 0) {
-      issues.push({ type: 'warning', message: `${duplicateCount} duplicate Indicator IDs found. You can continue, but duplicates might affect analysis.` });
+    if (duplicates.length > 0) {
+      issues.push({ type: 'error', message: `${duplicates.length} duplicate Indicator IDs found. Please fix in your file.` });
     }
 
     setValidationIssues(issues);
@@ -285,10 +236,8 @@ export function DocumentUploadStep({ onNext, onPrevious, onDataUpdate, data }: D
   const extractFromDocument = async (file: File) => {
     setAiExtracting(true);
     try {
-      // Simulate AI extraction - in production, call Lovable AI endpoint
       await new Promise(resolve => setTimeout(resolve, 2000));
       
-      // Mock extracted data
       const extracted: NormalizedIndicator[] = [
         { indicator_id: 'E1.1', indicator_text: 'Greenhouse gas emissions (Scope 1)', category: 'Environment', subcategory: 'Emissions', source: 'AI Extracted', notes: '' },
         { indicator_id: 'E1.2', indicator_text: 'Greenhouse gas emissions (Scope 2)', category: 'Environment', subcategory: 'Emissions', source: 'AI Extracted', notes: '' },
@@ -306,7 +255,6 @@ export function DocumentUploadStep({ onNext, onPrevious, onDataUpdate, data }: D
 
       setIndicators(extracted);
       validateIndicators(extracted);
-      setColumnHeaders(['indicator_id', 'indicator_text', 'category', 'subcategory', 'source', 'notes']);
       
       toast({
         title: "Extraction complete",
@@ -324,16 +272,39 @@ export function DocumentUploadStep({ onNext, onPrevious, onDataUpdate, data }: D
     }
   };
 
-  const handleMappingConfirm = () => {
+  const handleFixHeadersConfirm = () => {
     if (!columnMapping.indicator_id || !columnMapping.indicator_text) {
       toast({
         variant: "destructive",
-        title: "Mapping incomplete",
-        description: "Please map both Indicator ID and Indicator Text fields.",
+        title: "Selection required",
+        description: "Please select columns for both ID and Indicator text.",
       });
       return;
     }
-    applyMapping(columnHeaders, rawData, columnMapping);
+
+    let headers: string[];
+    let dataRows: any[][];
+
+    if (useCustomHeaderRow && customHeaderRowNum > 1 && customHeaderRowNum <= allRows.length) {
+      headers = allRows[customHeaderRowNum - 1].map((h: any) => String(h).trim()).filter((h: string) => h !== '');
+      dataRows = allRows.slice(customHeaderRowNum).filter(row => row.some(cell => cell !== ''));
+    } else {
+      headers = columnHeaders;
+      dataRows = rawData;
+    }
+
+    // Rename columns in-memory
+    const idIdx = headers.indexOf(columnMapping.indicator_id);
+    const textIdx = headers.indexOf(columnMapping.indicator_text);
+    
+    if (idIdx !== -1) headers[idIdx] = 'ID';
+    if (textIdx !== -1) headers[textIdx] = 'Indicator text';
+
+    setColumnHeaders(headers);
+    setRawData(dataRows);
+    setShowFixDialog(false);
+
+    processValidData(headers, dataRows, 'ID', 'Indicator text');
   };
 
   const handleIndicatorEdit = (index: number, field: keyof NormalizedIndicator, value: string) => {
@@ -346,10 +317,11 @@ export function DocumentUploadStep({ onNext, onPrevious, onDataUpdate, data }: D
   const handleContinue = () => {
     const errors = validationIssues.filter(issue => issue.type === 'error');
     if (errors.length > 0) {
+      const firstError = errors.find(e => e.rowIndex !== undefined);
       toast({
         variant: "destructive",
-        title: "Please fix errors",
-        description: `${errors.length} validation errors must be fixed before continuing.`,
+        title: "Cannot continue",
+        description: firstError ? `Fix issue in row ${(firstError.rowIndex || 0) + 2} before continuing.` : "Please fix all errors before continuing.",
       });
       return;
     }
@@ -374,13 +346,15 @@ export function DocumentUploadStep({ onNext, onPrevious, onDataUpdate, data }: D
     setUploadMode('none');
     setSelectedFile(null);
     setRawData([]);
+    setAllRows([]);
     setColumnHeaders([]);
     setIndicators([]);
     setValidationIssues([]);
-    setShowMapping(false);
+    setShowFixDialog(false);
+    setColumnMapping({ indicator_id: '', indicator_text: '' });
   };
 
-  // Render empty state
+  // Empty state with pre-upload checklist
   if (uploadMode === 'none') {
     return (
       <Card>
@@ -391,6 +365,13 @@ export function DocumentUploadStep({ onNext, onPrevious, onDataUpdate, data }: D
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
+          <Alert>
+            <Info className="h-4 w-4" />
+            <AlertDescription>
+              <strong>Requirements:</strong> Put headers in row 1. Include columns 'ID' and 'Indicator text'.
+            </AlertDescription>
+          </Alert>
+
           <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-8">
             <div className="text-center space-y-6">
               <div>
@@ -461,23 +442,56 @@ export function DocumentUploadStep({ onNext, onPrevious, onDataUpdate, data }: D
     );
   }
 
-  // Render column mapping UI
-  if (showMapping) {
+  // Fix headers dialog
+  if (showFixDialog) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Map Columns</CardTitle>
+          <CardTitle>Fix Headers</CardTitle>
           <CardDescription>
-            Map the required fields so we know which columns contain indicator IDs and texts.
+            Your file must contain 'ID' and 'Indicator text' in the header row. Choose columns or update your file.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              Missing required columns: 'ID' and 'Indicator text' must be in row 1.
+            </AlertDescription>
+          </Alert>
+
+          <div>
+            <h4 className="text-sm font-medium mb-2">First 10 rows preview:</h4>
+            <div className="border rounded-lg overflow-auto max-h-64">
+              <table className="w-full text-xs">
+                <thead className="bg-muted/50 sticky top-0">
+                  <tr>
+                    <th className="px-2 py-1 text-left font-medium">#</th>
+                    {columnHeaders.slice(0, 6).map((header, idx) => (
+                      <th key={idx} className="px-2 py-1 text-left font-medium">{header || `Col ${idx + 1}`}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {rawData.slice(0, 10).map((row, idx) => (
+                    <tr key={idx} className={idx % 2 === 0 ? 'bg-muted/20' : ''}>
+                      <td className="px-2 py-1 text-muted-foreground">{idx + 1}</td>
+                      {row.slice(0, 6).map((cell: any, cellIdx: number) => (
+                        <td key={cellIdx} className="px-2 py-1">{String(cell || '').substring(0, 30)}</td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label>Indicator ID *</Label>
+              <Label>Select the column for ID *</Label>
               <Select value={columnMapping.indicator_id} onValueChange={(val) => setColumnMapping({ ...columnMapping, indicator_id: val })}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select column for Indicator ID" />
+                  <SelectValue placeholder="Choose ID column" />
                 </SelectTrigger>
                 <SelectContent>
                   {columnHeaders.map(header => (
@@ -488,10 +502,10 @@ export function DocumentUploadStep({ onNext, onPrevious, onDataUpdate, data }: D
             </div>
 
             <div className="space-y-2">
-              <Label>Indicator Text *</Label>
+              <Label>Select the column for Indicator text *</Label>
               <Select value={columnMapping.indicator_text} onValueChange={(val) => setColumnMapping({ ...columnMapping, indicator_text: val })}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select column for Indicator Text" />
+                  <SelectValue placeholder="Choose Indicator text column" />
                 </SelectTrigger>
                 <SelectContent>
                   {columnHeaders.map(header => (
@@ -501,83 +515,34 @@ export function DocumentUploadStep({ onNext, onPrevious, onDataUpdate, data }: D
               </Select>
             </div>
 
-            <Collapsible open={showAdvancedMapping} onOpenChange={setShowAdvancedMapping}>
-              <CollapsibleTrigger asChild>
-                <Button variant="ghost" className="w-full justify-between">
-                  <span className="text-sm">Advanced (optional)</span>
-                  {showAdvancedMapping ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                </Button>
-              </CollapsibleTrigger>
-              <CollapsibleContent className="space-y-4 pt-4">
-                <div className="space-y-2">
-                  <Label>Category</Label>
-                  <Select value={columnMapping.category} onValueChange={(val) => setColumnMapping({ ...columnMapping, category: val })}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select column (optional)" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="">None</SelectItem>
-                      {columnHeaders.map(header => (
-                        <SelectItem key={header} value={header}>{header}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Subcategory</Label>
-                  <Select value={columnMapping.subcategory} onValueChange={(val) => setColumnMapping({ ...columnMapping, subcategory: val })}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select column (optional)" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="">None</SelectItem>
-                      {columnHeaders.map(header => (
-                        <SelectItem key={header} value={header}>{header}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Source</Label>
-                  <Select value={columnMapping.source} onValueChange={(val) => setColumnMapping({ ...columnMapping, source: val })}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select column (optional)" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="">None</SelectItem>
-                      {columnHeaders.map(header => (
-                        <SelectItem key={header} value={header}>{header}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Notes</Label>
-                  <Select value={columnMapping.notes} onValueChange={(val) => setColumnMapping({ ...columnMapping, notes: val })}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select column (optional)" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="">None</SelectItem>
-                      {columnHeaders.map(header => (
-                        <SelectItem key={header} value={header}>{header}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </CollapsibleContent>
-            </Collapsible>
+            <div className="flex items-center space-x-2">
+              <Checkbox 
+                id="customHeader" 
+                checked={useCustomHeaderRow}
+                onCheckedChange={(checked) => setUseCustomHeaderRow(checked as boolean)}
+              />
+              <Label htmlFor="customHeader" className="text-sm font-normal cursor-pointer">
+                Row 1 is not headers—use row{' '}
+                <Input 
+                  type="number" 
+                  min="2" 
+                  max={Math.min(allRows.length, 20)}
+                  value={customHeaderRowNum}
+                  onChange={(e) => setCustomHeaderRowNum(parseInt(e.target.value) || 2)}
+                  className="w-16 h-7 inline-block mx-1"
+                  disabled={!useCustomHeaderRow}
+                />
+                {' '}as header instead.
+              </Label>
+            </div>
           </div>
 
           <div className="flex gap-4">
             <Button onClick={resetUpload} variant="outline" className="flex-1">
               Back to Upload
             </Button>
-            <Button onClick={handleMappingConfirm} className="flex-1">
-              Apply Mapping
+            <Button onClick={handleFixHeadersConfirm} className="flex-1">
+              Rename & Apply
             </Button>
           </div>
         </CardContent>
@@ -585,9 +550,10 @@ export function DocumentUploadStep({ onNext, onPrevious, onDataUpdate, data }: D
     );
   }
 
-  // Render preview and validation
+  // Preview and validation
   const errors = validationIssues.filter(i => i.type === 'error');
-  const warnings = validationIssues.filter(i => i.type === 'warning');
+  const duplicateErrors = errors.filter(e => !e.rowIndex);
+  const rowErrors = errors.filter(e => e.rowIndex !== undefined);
   const canContinue = errors.length === 0 && indicators.length > 0;
 
   return (
@@ -613,31 +579,40 @@ export function DocumentUploadStep({ onNext, onPrevious, onDataUpdate, data }: D
           </Alert>
         )}
 
-        {warnings.length > 0 && (
-          <Alert>
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>{warnings[0].message}</AlertDescription>
-          </Alert>
-        )}
+        {/* Summary chips */}
+        <div className="flex flex-wrap gap-2">
+          <Badge variant="secondary">
+            {indicators.length} indicators
+          </Badge>
+          {duplicateErrors.length > 0 && (
+            <Badge variant="destructive">
+              {duplicateErrors[0].message.match(/\d+/)?.[0] || '0'} duplicate IDs
+            </Badge>
+          )}
+          {rowErrors.length > 0 && (
+            <Badge variant="destructive">
+              {rowErrors.length} empty texts
+            </Badge>
+          )}
+        </div>
 
         {errors.length > 0 && (
           <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
-              {errors.length} validation errors found. Fix issues before continuing.
+              {duplicateErrors.length > 0 && (
+                <div className="mb-2">{duplicateErrors[0].message}</div>
+              )}
+              {rowErrors.length > 0 && (
+                <div>
+                  {rowErrors.length} validation errors found. {rowErrors[0].message}
+                </div>
+              )}
             </AlertDescription>
           </Alert>
         )}
 
         <div className="border rounded-lg">
-          <div className="bg-muted/50 px-4 py-2 border-b flex items-center justify-between">
-            <div className="flex gap-4 text-sm">
-              <span>Total: <strong>{indicators.length}</strong></span>
-              {errors.length > 0 && <span className="text-destructive">Errors: <strong>{errors.length}</strong></span>}
-              {warnings.length > 0 && <span className="text-yellow-600">Warnings: <strong>{warnings.length}</strong></span>}
-            </div>
-          </div>
-
           <div className="overflow-auto max-h-80">
             <table className="w-full text-sm">
               <thead className="bg-muted/30 sticky top-0">
@@ -651,7 +626,7 @@ export function DocumentUploadStep({ onNext, onPrevious, onDataUpdate, data }: D
               </thead>
               <tbody>
                 {indicators.map((indicator, idx) => {
-                  const hasError = errors.some(e => e.rowIndex === idx);
+                  const hasError = rowErrors.some(e => e.rowIndex === idx);
                   return (
                     <tr key={idx} className={hasError ? 'bg-destructive/10' : idx % 2 === 0 ? 'bg-muted/20' : ''}>
                       <td className="px-4 py-2 text-muted-foreground">{idx + 1}</td>
