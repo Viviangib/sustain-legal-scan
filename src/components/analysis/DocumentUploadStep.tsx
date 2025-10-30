@@ -445,7 +445,7 @@ export function DocumentUploadStep({ onNext, onPrevious, onDataUpdate, data }: D
         <CardHeader>
           <CardTitle>Share your sustainability indicators</CardTitle>
           <CardDescription>
-            Upload Excel (preferred) or extract from a PDF/Word framework. Max 10MB.
+            Upload your sustainability indicators in Excel (preferred) or extract from a PDF/Word document. Max size: 10MB.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
