@@ -34,6 +34,8 @@ export function DocumentUploadStep({ onNext, onPrevious, onDataUpdate, data }: D
   const [aiExtracting, setAiExtracting] = useState(false);
   const [showExtractionPreview, setShowExtractionPreview] = useState(false);
   const [extractedIndicators, setExtractedIndicators] = useState<NormalizedIndicator[]>([]);
+  const [uploadSuccess, setUploadSuccess] = useState(false);
+  const [uploadedFileInfo, setUploadedFileInfo] = useState<{ name: string; size: number; indicatorCount: number } | null>(null);
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -71,12 +73,24 @@ export function DocumentUploadStep({ onNext, onPrevious, onDataUpdate, data }: D
     setSelectedFile(file);
     setUploadMode(mode);
     setValidationError('');
+    setUploadSuccess(false);
 
     if (mode === 'excel') {
       await parseExcelFile(file);
     } else {
       await extractFromDocument(file);
     }
+  };
+
+  const handleChangeFile = () => {
+    setUploadSuccess(false);
+    setUploadedFileInfo(null);
+    setSelectedFile(null);
+    setValidationError('');
+  };
+
+  const formatFileSize = (bytes: number): string => {
+    return `(${(bytes / (1024 * 1024)).toFixed(2)} MB)`;
   };
 
   const parseExcelFile = async (file: File) => {
@@ -133,12 +147,17 @@ export function DocumentUploadStep({ onNext, onPrevious, onDataUpdate, data }: D
         } 
       });
 
+      setUploadedFileInfo({
+        name: file.name,
+        size: file.size,
+        indicatorCount: validationResult.indicators!.length
+      });
+      setUploadSuccess(true);
+
       toast({
         title: "Framework loaded",
         description: `${validationResult.indicators!.length} indicators ready for analysis.`,
       });
-
-      onNext();
     } catch (error) {
       console.error('Excel parsing error:', error);
       setValidationError("Failed to parse Excel file. Ensure it's a valid XLS/XLSX/CSV file.");
@@ -408,7 +427,22 @@ export function DocumentUploadStep({ onNext, onPrevious, onDataUpdate, data }: D
           </Alert>
         )}
 
-        {(isProcessing || aiExtracting) ? (
+        {uploadSuccess && uploadedFileInfo && (
+          <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg border">
+            <div className="flex items-center gap-3">
+              <FileSpreadsheet className="h-5 w-5 text-primary" />
+              <div>
+                <span className="font-medium">{uploadedFileInfo.name}</span>
+                <span className="text-muted-foreground ml-2">{formatFileSize(uploadedFileInfo.size)}</span>
+              </div>
+            </div>
+            <Button onClick={handleChangeFile} variant="ghost">
+              Change File
+            </Button>
+          </div>
+        )}
+
+        {!uploadSuccess && (isProcessing || aiExtracting) ? (
           <div className="flex items-center justify-center py-12">
             <div className="text-center space-y-4">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
@@ -417,7 +451,7 @@ export function DocumentUploadStep({ onNext, onPrevious, onDataUpdate, data }: D
               </p>
             </div>
           </div>
-        ) : (
+        ) : !uploadSuccess && (
           <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-8">
             <div className="text-center space-y-6">
               <div>
