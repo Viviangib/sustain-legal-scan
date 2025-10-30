@@ -404,6 +404,20 @@ export function DocumentUploadStep({ onNext, onPrevious, onDataUpdate, data }: D
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
+        <Alert>
+          <Info className="h-4 w-4" />
+          <AlertDescription>
+            <div>
+              <strong>Requirements:</strong>
+              <ul className="list-disc pl-5 mt-2 space-y-1">
+                <li>Put headers in row 1.</li>
+                <li>Include columns <strong>"ID"</strong> and <strong>"Indicator text"</strong>.</li>
+                <li>Both fields required for each row.</li>
+              </ul>
+            </div>
+          </AlertDescription>
+        </Alert>
+
         {validationError && (
           <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
@@ -467,20 +481,6 @@ export function DocumentUploadStep({ onNext, onPrevious, onDataUpdate, data }: D
                     </Button>
                   </Label>
                 </div>
-
-                <Alert>
-                  <Info className="h-4 w-4" />
-                  <AlertDescription>
-                    <div>
-                      <strong>Requirements:</strong>
-                      <ul className="list-disc pl-5 mt-2 space-y-1">
-                        <li>Put headers in row 1.</li>
-                        <li>Include columns <strong>"ID"</strong> and <strong>"Indicator text"</strong>.</li>
-                        <li>Both fields required for each row.</li>
-                      </ul>
-                    </div>
-                  </AlertDescription>
-                </Alert>
 
                 <div className="relative">
                   <div className="absolute inset-0 flex items-center">
