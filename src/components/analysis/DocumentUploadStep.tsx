@@ -515,9 +515,9 @@ export function DocumentUploadStep({ onNext, onPrevious, onDataUpdate, data }: D
                     <div>
                       <strong>Requirements:</strong>
                       <ul className="list-disc pl-5 mt-2 space-y-1">
-                        <li>Row 1 = headers</li>
-                        <li>Columns: <strong>ID</strong>, <strong>Indicator text</strong></li>
-                        <li>Both fields required per row</li>
+                        <li>Put headers in row 1.</li>
+                        <li>Include columns "ID" and "Indicator text".</li>
+                        <li>Both fields required per row. No duplicate IDs.</li>
                       </ul>
                     </div>
                   </AlertDescription>
