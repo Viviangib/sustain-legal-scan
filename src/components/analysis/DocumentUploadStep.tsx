@@ -340,7 +340,7 @@ export function DocumentUploadStep({ onNext, onPrevious, onDataUpdate, data }: D
                     <Button variant="default" className="w-full" asChild disabled={isProcessing}>
                       <span>
                         <Upload className="mr-2 h-4 w-4" />
-                        Upload Excel (XLS/XLSX/CSV)
+                        Upload an indicator file (Excel)
                       </span>
                     </Button>
                   </Label>
@@ -369,7 +369,7 @@ export function DocumentUploadStep({ onNext, onPrevious, onDataUpdate, data }: D
                     <Button variant="outline" className="w-full" asChild disabled={isProcessing || aiExtracting}>
                       <span>
                         <FileText className="mr-2 h-4 w-4" />
-                        Upload PDF/Word for AI extraction
+                        Upload a document that contains indicators for AI extraction (PDF/Word)
                       </span>
                     </Button>
                   </Label>
