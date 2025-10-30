@@ -400,10 +400,24 @@ export function DocumentUploadStep({ onNext, onPrevious, onDataUpdate, data }: D
       <CardHeader>
         <CardTitle>Sustainability Indicators</CardTitle>
         <CardDescription>
-          Choose one of the two options below to share your sustainability indicators. Max file size: 10MB.
+          Upload your sustainability indicators in Excel or let AI extract indicators from a PDF/Word document. Max size: 10MB.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
+        <Alert>
+          <Info className="h-4 w-4" />
+          <AlertDescription>
+            <div>
+              <strong>Requirements:</strong>
+              <ul className="list-disc pl-5 mt-2 space-y-1">
+                <li>Put headers in row 1.</li>
+                <li>Include columns <strong>"ID"</strong> and <strong>"Indicator text"</strong>.</li>
+                <li>Both fields required for each row.</li>
+              </ul>
+            </div>
+          </AlertDescription>
+        </Alert>
+
         {validationError && (
           <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
@@ -438,34 +452,17 @@ export function DocumentUploadStep({ onNext, onPrevious, onDataUpdate, data }: D
             </div>
           </div>
         ) : !uploadSuccess && (
-          <div className="space-y-6">
-            {/* Option 1: Excel Upload */}
-            <div className="border-2 rounded-lg p-6 space-y-4">
-              <div className="flex items-start gap-3">
-                <div className="bg-primary/10 p-2 rounded-lg">
-                  <FileSpreadsheet className="h-6 w-6 text-primary" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-semibold text-lg mb-1">Option 1: Upload Excel File</h3>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    Best option for structured data and immediate AI analysis
-                  </p>
-                  
-                  <Alert className="mb-4 bg-primary/5 border-primary/20">
-                    <Info className="h-4 w-4" />
-                    <AlertDescription>
-                      <div className="text-sm">
-                        <strong>File Requirements:</strong>
-                        <ul className="list-disc pl-5 mt-2 space-y-1">
-                          <li>Headers must be in <strong>row 1</strong></li>
-                          <li>Required columns: <strong>"ID"</strong> and <strong>"Indicator text"</strong></li>
-                          <li>Both ID and Indicator text are required for every row</li>
-                          <li>No duplicate IDs allowed</li>
-                        </ul>
-                      </div>
-                    </AlertDescription>
-                  </Alert>
+          <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-8">
+            <div className="text-center space-y-6">
+              <div>
+                <FileSpreadsheet className="h-12 w-12 mx-auto mb-3 text-primary" />
+                <p className="text-sm text-muted-foreground mb-4">
+                  Upload your framework file. Excel works best. You can also upload a PDF/Word and let AI extract indicators.
+                </p>
+              </div>
 
+              <div className="space-y-3">
+                <div>
                   <Input
                     type="file"
                     accept=".xls,.xlsx,.csv"
@@ -476,51 +473,25 @@ export function DocumentUploadStep({ onNext, onPrevious, onDataUpdate, data }: D
                     key={selectedFile?.name || 'excel-input'}
                   />
                   <Label htmlFor="excelInput">
-                    <Button 
-                      variant="default" 
-                      className="w-full" 
-                      asChild 
-                      disabled={isProcessing}
-                    >
+                    <Button variant="outline" className="w-full bg-primary/20 hover:bg-primary/30 border-primary/30" asChild disabled={isProcessing}>
                       <span>
                         <Upload className="mr-2 h-4 w-4" />
-                        Select Excel File (.xls, .xlsx, .csv)
+                        Upload an indicator file (Excel)
                       </span>
                     </Button>
                   </Label>
                 </div>
-              </div>
-            </div>
 
-            {/* Divider */}
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t" />
-              </div>
-              <div className="relative flex justify-center text-sm font-medium">
-                <span className="bg-background px-4 text-muted-foreground">OR</span>
-              </div>
-            </div>
-
-            {/* Option 2: Document Upload with AI Extraction */}
-            <div className="border-2 rounded-lg p-6 space-y-4 border-muted-foreground/25">
-              <div className="flex items-start gap-3">
-                <div className="bg-muted p-2 rounded-lg">
-                  <FileText className="h-6 w-6 text-muted-foreground" />
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t" />
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-background px-2 text-muted-foreground">Or</span>
+                  </div>
                 </div>
-                <div className="flex-1">
-                  <h3 className="font-semibold text-lg mb-1">Option 2: AI Extraction from Document</h3>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    Upload a PDF or Word document and let AI extract indicators for you
-                  </p>
-                  
-                  <Alert className="mb-4">
-                    <Info className="h-4 w-4" />
-                    <AlertDescription className="text-sm">
-                      AI will scan your document and extract sustainability indicators. You'll be able to review and edit the results before analysis.
-                    </AlertDescription>
-                  </Alert>
 
+                <div>
                   <Input
                     type="file"
                     accept=".pdf,.doc,.docx"
@@ -531,15 +502,10 @@ export function DocumentUploadStep({ onNext, onPrevious, onDataUpdate, data }: D
                     key={selectedFile?.name || 'doc-input'}
                   />
                   <Label htmlFor="docInput">
-                    <Button 
-                      variant="outline" 
-                      className="w-full" 
-                      asChild 
-                      disabled={isProcessing || aiExtracting}
-                    >
+                    <Button variant="outline" className="w-full" asChild disabled={isProcessing || aiExtracting}>
                       <span>
                         <FileText className="mr-2 h-4 w-4" />
-                        Select Document (.pdf, .doc, .docx)
+                        Upload a document that contains indicators for AI extraction (PDF/Word)
                       </span>
                     </Button>
                   </Label>
