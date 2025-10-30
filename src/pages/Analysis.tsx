@@ -34,7 +34,7 @@ export type AnalysisData = {
 
 const steps = [
   { id: 1, name: 'Primary Information', icon: Upload, status: 'current' },
-  { id: 2, name: 'Sustainability Framework', icon: FileText, status: 'upcoming' },
+  { id: 2, name: 'Sustainability Indicators', icon: FileText, status: 'upcoming' },
   { id: 3, name: 'Supporting Documents', icon: FileText, status: 'upcoming' },
   { id: 4, name: 'Legal Framework', icon: Settings, status: 'upcoming' },
   { id: 5, name: 'AI Analysis', icon: BarChart3, status: 'upcoming' },

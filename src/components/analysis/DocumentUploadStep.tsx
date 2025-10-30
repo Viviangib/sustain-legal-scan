@@ -375,7 +375,7 @@ export function DocumentUploadStep({ onNext, onPrevious, onDataUpdate, data }: D
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Sustainability Framework</CardTitle>
+          <CardTitle>Sustainability Indicators</CardTitle>
           <CardDescription>
             {isProcessing ? 'Processing your Excel file...' : 'Extracting indicators from document...'}
           </CardDescription>
@@ -398,7 +398,7 @@ export function DocumentUploadStep({ onNext, onPrevious, onDataUpdate, data }: D
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Sustainability Framework</CardTitle>
+        <CardTitle>Sustainability Indicators</CardTitle>
         <CardDescription>
           Upload your framework file (Excel preferred) or let AI extract from PDF/Word. Max 10MB.
         </CardDescription>
