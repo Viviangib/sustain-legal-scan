@@ -326,19 +326,22 @@ export function DocumentUploadStep({ onNext, onPrevious, onDataUpdate, data }: D
           {extractedIndicators.length > 10 && (
             <Alert>
               <Info className="h-4 w-4" />
-              <AlertDescription>
-                Showing 10 of {extractedIndicators.length} indicators. All will be included in the analysis.
+              <AlertDescription className="flex items-center justify-between">
+                <span>Showing 10 of {extractedIndicators.length} indicators. All will be included in the analysis.</span>
+                <Button onClick={confirmExtraction} className="ml-4">
+                  Confirm and Continue
+                </Button>
               </AlertDescription>
             </Alert>
           )}
 
-          <div className="flex gap-4">
-            <Button onClick={confirmExtraction} className="flex-1">
-              Confirm and Continue
-            </Button>
-            <Button onClick={downloadExcelForEditing} variant="outline" className="flex-1">
+          <div className="space-y-2">
+            <Button onClick={downloadExcelForEditing} variant="outline" className="w-full">
               Download Excel to Edit
             </Button>
+            <p className="text-sm text-muted-foreground text-center">
+              Then re-upload the edited indicator Excel on the previous page.
+            </p>
           </div>
         </CardContent>
       </Card>
