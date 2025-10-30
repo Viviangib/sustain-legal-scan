@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -6,9 +6,21 @@ import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
-import { Upload, FileSpreadsheet, FileText, AlertCircle, Info, Download } from 'lucide-react';
+import { Upload, FileSpreadsheet, FileText, AlertCircle, Info } from 'lucide-react';
 import { AnalysisData } from '@/pages/Analysis';
 import * as XLSX from 'xlsx';
+import { ExtractionProgressCard } from './ExtractionProgressCard';
+import { UnifiedPreviewTable } from './UnifiedPreviewTable';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 interface NormalizedIndicator {
   indicator_id: string;
@@ -19,6 +31,12 @@ interface NormalizedIndicator {
   notes?: string;
 }
 
+interface ValidationIssue {
+  type: 'duplicate' | 'empty_id' | 'short_text';
+  rowIndex: number;
+  message: string;
+}
+
 interface DocumentUploadStepProps {
   onNext: () => void;
   onPrevious: () => void;
@@ -26,18 +44,52 @@ interface DocumentUploadStepProps {
   data: AnalysisData;
 }
 
+type UploadMode = 'excel' | 'pdf-word';
+type ExtractionStep = {
+  id: string;
+  label: string;
+  status: 'pending' | 'running' | 'done' | 'error';
+};
+
 export function DocumentUploadStep({ onNext, onPrevious, onDataUpdate, data }: DocumentUploadStepProps) {
-  const [uploadMode, setUploadMode] = useState<'none' | 'excel' | 'document'>('none');
+  const [uploadMode, setUploadMode] = useState<UploadMode>('excel');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [validationError, setValidationError] = useState<string>('');
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [aiExtracting, setAiExtracting] = useState(false);
-  const [showExtractionPreview, setShowExtractionPreview] = useState(false);
-  const [extractedIndicators, setExtractedIndicators] = useState<NormalizedIndicator[]>([]);
-  const [uploadSuccess, setUploadSuccess] = useState(false);
-  const [uploadedFileInfo, setUploadedFileInfo] = useState<{ name: string; size: number; indicatorCount: number } | null>(null);
+  const [indicators, setIndicators] = useState<NormalizedIndicator[]>([]);
+  const [validationIssues, setValidationIssues] = useState<ValidationIssue[]>([]);
+  const [hasUnsavedEdits, setHasUnsavedEdits] = useState(false);
+  
+  // Extraction state
+  const [isExtracting, setIsExtracting] = useState(false);
+  const [isMinimized, setIsMinimized] = useState(false);
+  const [extractionProgress, setExtractionProgress] = useState(0);
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [extractionSteps, setExtractionSteps] = useState<ExtractionStep[]>([
+    { id: 'upload', label: 'Upload', status: 'pending' },
+    { id: 'ocr', label: 'OCR', status: 'pending' },
+    { id: 'parse', label: 'Parse', status: 'pending' },
+    { id: 'extract', label: 'Extract', status: 'pending' },
+    { id: 'validate', label: 'Validate', status: 'pending' },
+  ]);
+
+  const [showReplaceDialog, setShowReplaceDialog] = useState(false);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
+
   const { user } = useAuth();
   const { toast } = useToast();
+
+  // Timer for extraction
+  useEffect(() => {
+    let interval: number;
+    if (isExtracting) {
+      interval = window.setInterval(() => {
+        setElapsedSeconds((prev) => prev + 1);
+      }, 1000);
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [isExtracting]);
 
   const normalizeHeaderName = (header: string): string => {
     return header.toLowerCase().trim().replace(/\s+/g, ' ');
@@ -57,7 +109,45 @@ export function DocumentUploadStep({ onNext, onPrevious, onDataUpdate, data }: D
     };
   };
 
-  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>, mode: 'excel' | 'document') => {
+  const validateIndicators = (indicators: NormalizedIndicator[]): ValidationIssue[] => {
+    const issues: ValidationIssue[] = [];
+    const seenIds = new Map<string, number>();
+
+    indicators.forEach((ind, idx) => {
+      // Check for empty ID
+      if (!ind.indicator_id || ind.indicator_id.trim() === '') {
+        issues.push({
+          type: 'empty_id',
+          rowIndex: idx,
+          message: 'Indicator ID cannot be empty'
+        });
+      } else {
+        // Check for duplicates
+        if (seenIds.has(ind.indicator_id)) {
+          issues.push({
+            type: 'duplicate',
+            rowIndex: idx,
+            message: `Duplicate ID: ${ind.indicator_id}`
+          });
+        } else {
+          seenIds.set(ind.indicator_id, idx);
+        }
+      }
+
+      // Check for short indicator text
+      if (!ind.indicator_text || ind.indicator_text.trim().length < 3) {
+        issues.push({
+          type: 'short_text',
+          rowIndex: idx,
+          message: 'Indicator text must be at least 3 characters'
+        });
+      }
+    });
+
+    return issues;
+  };
+
+  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
@@ -70,31 +160,29 @@ export function DocumentUploadStep({ onNext, onPrevious, onDataUpdate, data }: D
       return;
     }
 
-    setSelectedFile(file);
-    setUploadMode(mode);
-    setValidationError('');
-    setUploadSuccess(false);
+    // If there are unsaved edits, show confirmation
+    if (hasUnsavedEdits && indicators.length > 0) {
+      setPendingFile(file);
+      setShowReplaceDialog(true);
+      return;
+    }
 
-    if (mode === 'excel') {
+    processFile(file);
+  };
+
+  const processFile = async (file: File) => {
+    setSelectedFile(file);
+    setValidationError('');
+    setHasUnsavedEdits(false);
+
+    if (uploadMode === 'excel') {
       await parseExcelFile(file);
     } else {
       await extractFromDocument(file);
     }
   };
 
-  const handleChangeFile = () => {
-    setUploadSuccess(false);
-    setUploadedFileInfo(null);
-    setSelectedFile(null);
-    setValidationError('');
-  };
-
-  const formatFileSize = (bytes: number): string => {
-    return `(${(bytes / (1024 * 1024)).toFixed(2)} MB)`;
-  };
-
   const parseExcelFile = async (file: File) => {
-    setIsProcessing(true);
     try {
       const buffer = await file.arrayBuffer();
       const workbook = XLSX.read(buffer, { type: 'array' });
@@ -115,14 +203,10 @@ export function DocumentUploadStep({ onNext, onPrevious, onDataUpdate, data }: D
       const validation = hasRequiredHeaders(headers);
 
       if (!validation.hasId || !validation.hasText) {
-        const missing: string[] = [];
-        if (!validation.hasId) missing.push("'ID'");
-        if (!validation.hasText) missing.push("'Indicator text'");
-        setValidationError(`Your file must contain ${missing.join(' and ')} in the header row (row 1). Please update your file.`);
+        setValidationError("Missing required columns: ID, Indicator text. Map columns to continue.");
         return;
       }
 
-      // Valid headers found - process data
       const dataRows = jsonData.slice(1).filter(row => row.some(cell => cell !== ''));
       
       if (dataRows.length === 0) {
@@ -130,54 +214,33 @@ export function DocumentUploadStep({ onNext, onPrevious, onDataUpdate, data }: D
         return;
       }
 
-      // Validate data
-      const validationResult = validateData(headers, dataRows, validation.idCol, validation.textCol);
+      const parsed = parseIndicators(headers, dataRows, validation.idCol, validation.textCol);
+      setIndicators(parsed);
       
-      if (validationResult.error) {
-        setValidationError(validationResult.error);
-        return;
-      }
-
-      // All validations passed - save and proceed
-      onDataUpdate({ 
-        document: { 
-          indicators: validationResult.indicators!,
-          filename: file.name,
-          uploadedAt: new Date().toISOString()
-        } 
-      });
-
-      setUploadedFileInfo({
-        name: file.name,
-        size: file.size,
-        indicatorCount: validationResult.indicators!.length
-      });
-      setUploadSuccess(true);
+      const issues = validateIndicators(parsed);
+      setValidationIssues(issues);
 
       toast({
         title: "Framework loaded",
-        description: `${validationResult.indicators!.length} indicators ready for analysis.`,
+        description: `${parsed.length} indicators ready for review.`,
       });
     } catch (error) {
       console.error('Excel parsing error:', error);
       setValidationError("Failed to parse Excel file. Ensure it's a valid XLS/XLSX/CSV file.");
-    } finally {
-      setIsProcessing(false);
     }
   };
 
-  const validateData = (headers: string[], dataRows: any[][], idCol: string, textCol: string): { error?: string; indicators?: NormalizedIndicator[] } => {
+  const parseIndicators = (headers: string[], dataRows: any[][], idCol: string, textCol: string): NormalizedIndicator[] => {
     const idIdx = headers.indexOf(idCol);
     const textIdx = headers.indexOf(textCol);
     
-    // Look for optional columns (case-insensitive)
     const normalized = headers.map(h => normalizeHeaderName(h));
     const categoryIdx = normalized.findIndex(h => h === 'category');
     const subcategoryIdx = normalized.findIndex(h => h === 'subcategory');
     const sourceIdx = normalized.findIndex(h => h === 'source');
     const notesIdx = normalized.findIndex(h => h === 'notes');
 
-    const indicators: NormalizedIndicator[] = dataRows.map(row => ({
+    return dataRows.map(row => ({
       indicator_id: String(row[idIdx] || '').trim(),
       indicator_text: String(row[textIdx] || '').trim(),
       category: categoryIdx !== -1 ? String(row[categoryIdx] || '').trim() : '',
@@ -185,107 +248,107 @@ export function DocumentUploadStep({ onNext, onPrevious, onDataUpdate, data }: D
       source: sourceIdx !== -1 ? String(row[sourceIdx] || '').trim() : '',
       notes: notesIdx !== -1 ? String(row[notesIdx] || '').trim() : ''
     }));
-
-    // Validation checks
-    const seenIds = new Map<string, number>();
-    const duplicateIds: string[] = [];
-    const emptyIds: number[] = [];
-    const shortTexts: number[] = [];
-
-    indicators.forEach((ind, idx) => {
-      // Check for empty ID
-      if (!ind.indicator_id) {
-        emptyIds.push(idx + 2); // +2 for header row and 1-based indexing
-      } else {
-        // Track duplicates
-        if (seenIds.has(ind.indicator_id)) {
-          if (!duplicateIds.includes(ind.indicator_id)) {
-            duplicateIds.push(ind.indicator_id);
-          }
-        } else {
-          seenIds.set(ind.indicator_id, idx);
-        }
-      }
-
-      // Check for empty or short indicator text
-      if (!ind.indicator_text || ind.indicator_text.length < 3) {
-        shortTexts.push(idx + 2);
-      }
-    });
-
-    // Build error message
-    const errors: string[] = [];
-    if (emptyIds.length > 0) {
-      errors.push(`Empty Indicator IDs in row(s): ${emptyIds.slice(0, 5).join(', ')}${emptyIds.length > 5 ? ` and ${emptyIds.length - 5} more` : ''}.`);
-    }
-    if (duplicateIds.length > 0) {
-      errors.push(`Duplicate Indicator IDs found: ${duplicateIds.slice(0, 3).join(', ')}${duplicateIds.length > 3 ? ` and ${duplicateIds.length - 3} more` : ''}.`);
-    }
-    if (shortTexts.length > 0) {
-      errors.push(`Indicator text too short (min 3 chars) in row(s): ${shortTexts.slice(0, 5).join(', ')}${shortTexts.length > 5 ? ` and ${shortTexts.length - 5} more` : ''}.`);
-    }
-
-    if (errors.length > 0) {
-      return { error: errors.join(' ') + ' Please fix in your file.' };
-    }
-
-    return { indicators };
   };
 
   const extractFromDocument = async (file: File) => {
-    setAiExtracting(true);
+    setIsExtracting(true);
+    setElapsedSeconds(0);
+    setExtractionProgress(0);
+    setIndicators([]);
+    
+    // Simulate extraction with steps
+    const steps = [...extractionSteps];
+    
     try {
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Upload
+      steps[0].status = 'running';
+      setExtractionSteps([...steps]);
+      await new Promise(resolve => setTimeout(resolve, 500));
+      steps[0].status = 'done';
+      setExtractionProgress(20);
+      setExtractionSteps([...steps]);
+
+      // OCR
+      steps[1].status = 'running';
+      setExtractionSteps([...steps]);
+      await new Promise(resolve => setTimeout(resolve, 800));
+      steps[1].status = 'done';
+      setExtractionProgress(40);
+      setExtractionSteps([...steps]);
+
+      // Parse
+      steps[2].status = 'running';
+      setExtractionSteps([...steps]);
+      await new Promise(resolve => setTimeout(resolve, 600));
+      steps[2].status = 'done';
+      setExtractionProgress(60);
+      setExtractionSteps([...steps]);
+
+      // Extract - stream indicators
+      steps[3].status = 'running';
+      setExtractionSteps([...steps]);
       
       const extracted: NormalizedIndicator[] = [
-        { indicator_id: 'E1.1', indicator_text: 'Greenhouse gas emissions (Scope 1)', category: 'Environment', subcategory: 'Emissions', source: 'AI Extracted', notes: '' },
-        { indicator_id: 'E1.2', indicator_text: 'Greenhouse gas emissions (Scope 2)', category: 'Environment', subcategory: 'Emissions', source: 'AI Extracted', notes: '' },
-        { indicator_id: 'S1.1', indicator_text: 'Employee diversity metrics', category: 'Social', subcategory: 'Workforce', source: 'AI Extracted', notes: '' },
-        { indicator_id: 'S1.2', indicator_text: 'Health and safety incident rate', category: 'Social', subcategory: 'Workforce', source: 'AI Extracted', notes: '' },
-        { indicator_id: 'G1.1', indicator_text: 'Board diversity', category: 'Governance', subcategory: 'Leadership', source: 'AI Extracted', notes: '' },
-        { indicator_id: 'E2.1', indicator_text: 'Water consumption', category: 'Environment', subcategory: 'Resources', source: 'AI Extracted', notes: '' },
-        { indicator_id: 'E2.2', indicator_text: 'Waste generated', category: 'Environment', subcategory: 'Resources', source: 'AI Extracted', notes: '' },
-        { indicator_id: 'S2.1', indicator_text: 'Employee training hours', category: 'Social', subcategory: 'Development', source: 'AI Extracted', notes: '' },
-        { indicator_id: 'G1.2', indicator_text: 'Ethics training completion', category: 'Governance', subcategory: 'Compliance', source: 'AI Extracted', notes: '' },
-        { indicator_id: 'E3.1', indicator_text: 'Renewable energy usage', category: 'Environment', subcategory: 'Energy', source: 'AI Extracted', notes: '' },
-        { indicator_id: 'S3.1', indicator_text: 'Employee turnover rate', category: 'Social', subcategory: 'Workforce', source: 'AI Extracted', notes: '' },
-        { indicator_id: 'G2.1', indicator_text: 'Anti-corruption policies', category: 'Governance', subcategory: 'Ethics', source: 'AI Extracted', notes: '' },
+        { indicator_id: 'E1.1', indicator_text: 'Greenhouse gas emissions (Scope 1)', category: 'Environment', subcategory: 'Emissions', source: 'AI Extracted' },
+        { indicator_id: 'E1.2', indicator_text: 'Greenhouse gas emissions (Scope 2)', category: 'Environment', subcategory: 'Emissions', source: 'AI Extracted' },
+        { indicator_id: 'S1.1', indicator_text: 'Employee diversity metrics', category: 'Social', subcategory: 'Workforce', source: 'AI Extracted' },
+        { indicator_id: 'S1.2', indicator_text: 'Health and safety incident rate', category: 'Social', subcategory: 'Workforce', source: 'AI Extracted' },
+        { indicator_id: 'G1.1', indicator_text: 'Board diversity', category: 'Governance', subcategory: 'Leadership', source: 'AI Extracted' },
+        { indicator_id: 'E2.1', indicator_text: 'Water consumption', category: 'Environment', subcategory: 'Resources', source: 'AI Extracted' },
+        { indicator_id: 'E2.2', indicator_text: 'Waste generated', category: 'Environment', subcategory: 'Resources', source: 'AI Extracted' },
+        { indicator_id: 'S2.1', indicator_text: 'Employee training hours', category: 'Social', subcategory: 'Development', source: 'AI Extracted' },
+        { indicator_id: 'G1.2', indicator_text: 'Ethics training completion', category: 'Governance', subcategory: 'Compliance', source: 'AI Extracted' },
+        { indicator_id: 'E3.1', indicator_text: 'Renewable energy usage', category: 'Environment', subcategory: 'Energy', source: 'AI Extracted' },
       ];
 
-      if (extracted.length === 0) {
-        setValidationError("We couldn't find indicators. Try a clearer document or upload an Excel file.");
-        setAiExtracting(false);
-        return;
+      // Stream indicators
+      for (let i = 0; i < extracted.length; i++) {
+        await new Promise(resolve => setTimeout(resolve, 200));
+        setIndicators(prev => [...prev, extracted[i]]);
       }
 
-      setExtractedIndicators(extracted);
-      setShowExtractionPreview(true);
+      steps[3].status = 'done';
+      setExtractionProgress(80);
+      setExtractionSteps([...steps]);
+
+      // Validate
+      steps[4].status = 'running';
+      setExtractionSteps([...steps]);
+      await new Promise(resolve => setTimeout(resolve, 400));
+      
+      const issues = validateIndicators(extracted);
+      setValidationIssues(issues);
+      
+      steps[4].status = 'done';
+      setExtractionProgress(100);
+      setExtractionSteps([...steps]);
+
       toast({
         title: "Extraction complete",
-        description: `Found ${extracted.length} indicators. Please review the preview.`,
+        description: `Found ${extracted.length} indicators. Please review.`,
       });
     } catch (error) {
       console.error('AI extraction error:', error);
       setValidationError("Failed to extract indicators. Try uploading an Excel file instead.");
     } finally {
-      setAiExtracting(false);
+      setIsExtracting(false);
     }
   };
 
-  const confirmExtraction = () => {
-    onDataUpdate({ 
-      document: { 
-        indicators: extractedIndicators,
-        filename: selectedFile?.name || 'AI Extracted',
-        uploadedAt: new Date().toISOString()
-      } 
-    });
-    onNext();
+  const handleEdit = (index: number, field: keyof NormalizedIndicator, value: string) => {
+    const updated = [...indicators];
+    updated[index] = { ...updated[index], [field]: value };
+    setIndicators(updated);
+    setHasUnsavedEdits(true);
+    
+    // Revalidate
+    const issues = validateIndicators(updated);
+    setValidationIssues(issues);
   };
 
-  const downloadExcelForEditing = () => {
+  const handleDownload = () => {
     const worksheet = XLSX.utils.json_to_sheet(
-      extractedIndicators.map(ind => ({
+      indicators.map(ind => ({
         'ID': ind.indicator_id,
         'Indicator text': ind.indicator_text,
         'Category': ind.category || '',
@@ -296,235 +359,294 @@ export function DocumentUploadStep({ onNext, onPrevious, onDataUpdate, data }: D
     );
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Indicators');
-    XLSX.writeFile(workbook, 'extracted_indicators.xlsx');
+    XLSX.writeFile(workbook, 'indicators.xlsx');
     
     toast({
       title: "Downloaded",
-      description: "Please review and upload the edited file.",
+      description: "You can edit and re-upload the file on this page.",
     });
-    
-    // Reset to allow re-upload
-    setShowExtractionPreview(false);
-    setExtractedIndicators([]);
-    setSelectedFile(null);
   };
 
-  // Extraction preview state
-  if (showExtractionPreview) {
-    const previewIndicators = extractedIndicators.slice(0, 10);
-    return (
+  const handleReset = () => {
+    if (hasUnsavedEdits) {
+      setPendingFile(null);
+      setShowReplaceDialog(true);
+    } else {
+      resetState();
+    }
+  };
+
+  const resetState = () => {
+    setSelectedFile(null);
+    setIndicators([]);
+    setValidationIssues([]);
+    setValidationError('');
+    setHasUnsavedEdits(false);
+    setIsExtracting(false);
+    setExtractionProgress(0);
+    setElapsedSeconds(0);
+    setExtractionSteps(extractionSteps.map(s => ({ ...s, status: 'pending' as const })));
+  };
+
+  const handleCancelExtraction = () => {
+    setIsExtracting(false);
+    resetState();
+    toast({
+      title: "Extraction cancelled",
+      description: "Upload cancelled by user.",
+    });
+  };
+
+  const handleUseIndicators = () => {
+    // Check for blocking errors (empty IDs or short texts)
+    const blockingIssues = validationIssues.filter(
+      issue => issue.type === 'empty_id' || issue.type === 'short_text'
+    );
+
+    if (blockingIssues.length > 0) {
+      toast({
+        variant: "destructive",
+        title: "Cannot proceed",
+        description: "Please fix empty IDs and short indicator texts before continuing.",
+      });
+      return;
+    }
+
+    // Save to parent state
+    onDataUpdate({ 
+      document: { 
+        indicators,
+        filename: selectedFile?.name || 'indicators',
+        uploadedAt: new Date().toISOString()
+      } 
+    });
+
+    onNext();
+  };
+
+  const canProceed = () => {
+    if (indicators.length === 0) return false;
+    
+    // Only block on empty IDs and short texts
+    const blockingIssues = validationIssues.filter(
+      issue => issue.type === 'empty_id' || issue.type === 'short_text'
+    );
+    
+    return blockingIssues.length === 0;
+  };
+
+  const acceptedTypes = uploadMode === 'excel' 
+    ? '.xlsx,.xls,.csv' 
+    : '.pdf,.docx,.doc';
+
+  return (
+    <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>AI Extraction Results</CardTitle>
+          <CardTitle>Share your sustainability indicators</CardTitle>
           <CardDescription>
-            Found {extractedIndicators.length} indicators. Review the first 10 below.
+            Upload Excel (preferred) or extract from a PDF/Word framework. Max 10MB.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div className="border rounded-lg overflow-hidden">
-            <table className="w-full text-sm">
-              <thead className="bg-muted">
-                <tr>
-                  <th className="px-4 py-2 text-left font-medium">ID</th>
-                  <th className="px-4 py-2 text-left font-medium">Indicator Text</th>
-                  <th className="px-4 py-2 text-left font-medium">Category</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y">
-                {previewIndicators.map((ind, idx) => (
-                  <tr key={idx} className="hover:bg-muted/50">
-                    <td className="px-4 py-2">{ind.indicator_id}</td>
-                    <td className="px-4 py-2">{ind.indicator_text}</td>
-                    <td className="px-4 py-2">{ind.category}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          {extractedIndicators.length > 10 && (
-            <Alert>
-              <AlertDescription className="flex items-center justify-between">
-                <span className="flex items-center gap-2">
-                  <Info className="h-4 w-4 flex-shrink-0" />
-                  Showing 10 of {extractedIndicators.length} indicators. All will be included in the analysis.
-                </span>
-                <Button onClick={confirmExtraction} className="ml-4 flex-shrink-0">
-                  Confirm and Continue
-                </Button>
-              </AlertDescription>
+          {validationError && (
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{validationError}</AlertDescription>
             </Alert>
           )}
 
-          <div className="space-y-2">
-            <Button onClick={downloadExcelForEditing} variant="outline" className="w-full">
-              <Download className="mr-2 h-4 w-4" />
-              Download to Edit (Excel)
+          {/* Segmented Control */}
+          <div className="flex items-center gap-2 p-1 bg-muted rounded-lg">
+            <Button
+              variant={uploadMode === 'excel' ? 'default' : 'ghost'}
+              className="flex-1"
+              onClick={() => setUploadMode('excel')}
+            >
+              <FileSpreadsheet className="mr-2 h-4 w-4" />
+              Excel
             </Button>
-            <p className="text-sm text-muted-foreground text-center">
-              Then re-upload the edited indicator Excel on the previous page.
-            </p>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  // Processing state
-  if (isProcessing || aiExtracting) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Sustainability Indicators</CardTitle>
-          <CardDescription>
-            {isProcessing ? 'Processing your Excel file...' : 'Extracting indicators from document...'}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="flex items-center justify-center py-12">
-            <div className="text-center space-y-4">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-              <p className="text-sm text-muted-foreground">
-                {isProcessing ? 'Validating your framework...' : 'AI is extracting indicators...'}
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  // Main upload interface (always visible)
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Sustainability Indicators</CardTitle>
-        <CardDescription>
-          Upload your sustainability indicators in Excel or let AI extract indicators from a PDF/Word document. Max size: 10MB.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        <Alert>
-          <Info className="h-4 w-4" />
-          <AlertDescription>
-            <div>
-              <strong>Requirements:</strong>
-              <ul className="list-disc pl-5 mt-2 space-y-1">
-                <li>Put headers in row 1.</li>
-                <li>Include columns <strong>"ID"</strong> and <strong>"Indicator text"</strong>.</li>
-                <li>Both fields required for each row.</li>
-              </ul>
-            </div>
-          </AlertDescription>
-        </Alert>
-
-        {validationError && (
-          <Alert variant="destructive">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>
-              {validationError}
-            </AlertDescription>
-          </Alert>
-        )}
-
-        {uploadSuccess && uploadedFileInfo && (
-          <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg border">
-            <div className="flex items-center gap-3">
-              <FileSpreadsheet className="h-5 w-5 text-primary" />
-              <div>
-                <span>{uploadedFileInfo.name}</span>
-                <span className="text-muted-foreground ml-2">{formatFileSize(uploadedFileInfo.size)}</span>
-              </div>
-            </div>
-            <Button onClick={handleChangeFile} variant="ghost">
-              Change File
+            <Button
+              variant={uploadMode === 'pdf-word' ? 'default' : 'ghost'}
+              className="flex-1"
+              onClick={() => setUploadMode('pdf-word')}
+            >
+              <FileText className="mr-2 h-4 w-4" />
+              PDF / Word
             </Button>
           </div>
-        )}
 
-        {!uploadSuccess && (isProcessing || aiExtracting) ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="text-center space-y-4">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-              <p className="text-sm text-muted-foreground">
-                {isProcessing ? 'Validating your framework...' : 'AI is extracting indicators...'}
-              </p>
-            </div>
-          </div>
-        ) : !uploadSuccess && (
-          <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-8">
-            <div className="text-center space-y-6">
-              <div>
-                <FileSpreadsheet className="h-12 w-12 mx-auto mb-3 text-primary" />
-                <p className="text-sm text-muted-foreground mb-4">
-                  Upload your framework file. Excel works best. You can also upload a PDF/Word and let AI extract indicators.
-                </p>
-              </div>
-
-              <div className="space-y-3">
+          {/* File Chip */}
+          {selectedFile && (
+            <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg border">
+              <div className="flex items-center gap-3">
+                {uploadMode === 'excel' ? (
+                  <FileSpreadsheet className="h-5 w-5 text-primary" />
+                ) : (
+                  <FileText className="h-5 w-5 text-primary" />
+                )}
                 <div>
-                  <Input
-                    type="file"
-                    accept=".xls,.xlsx,.csv"
-                    onChange={(e) => handleFileSelect(e, 'excel')}
-                    className="hidden"
-                    id="excelInput"
-                    disabled={isProcessing}
-                    key={selectedFile?.name || 'excel-input'}
-                  />
-                  <Label htmlFor="excelInput">
-                    <Button variant="outline" className="w-full bg-primary/20 hover:bg-primary/30 border-primary/30" asChild disabled={isProcessing}>
-                      <span>
-                        <Upload className="mr-2 h-4 w-4" />
-                        Upload an indicator file (Excel)
-                      </span>
-                    </Button>
-                  </Label>
-                </div>
-
-                <div className="relative">
-                  <div className="absolute inset-0 flex items-center">
-                    <span className="w-full border-t" />
-                  </div>
-                  <div className="relative flex justify-center text-xs uppercase">
-                    <span className="bg-background px-2 text-muted-foreground">Or</span>
-                  </div>
-                </div>
-
-                <div>
-                  <Input
-                    type="file"
-                    accept=".pdf,.doc,.docx"
-                    onChange={(e) => handleFileSelect(e, 'document')}
-                    className="hidden"
-                    id="docInput"
-                    disabled={isProcessing || aiExtracting}
-                    key={selectedFile?.name || 'doc-input'}
-                  />
-                  <Label htmlFor="docInput">
-                    <Button variant="outline" className="w-full" asChild disabled={isProcessing || aiExtracting}>
-                      <span>
-                        <FileText className="mr-2 h-4 w-4" />
-                        Upload a document that contains indicators for AI extraction (PDF/Word)
-                      </span>
-                    </Button>
-                  </Label>
+                  <span className="font-medium">{selectedFile.name}</span>
+                  <span className="text-muted-foreground ml-2">
+                    {(selectedFile.size / (1024 * 1024)).toFixed(2)} MB
+                  </span>
                 </div>
               </div>
+              <div className="flex items-center gap-2">
+                <Label htmlFor="replaceFile">
+                  <Button variant="outline" size="sm" asChild>
+                    <span>Replace</span>
+                  </Button>
+                </Label>
+                <Button variant="ghost" size="sm" onClick={handleReset}>
+                  Remove
+                </Button>
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
-        <div className="flex gap-4">
-          <Button onClick={onPrevious} variant="outline" className="flex-1">
-            Previous Step
-          </Button>
-          <Button onClick={onNext} className="flex-1">
-            Next Step
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
+          {/* Dropzone */}
+          {!selectedFile && !isExtracting && (
+            <div className="space-y-4">
+              {uploadMode === 'excel' && (
+                <Alert>
+                  <Info className="h-4 w-4" />
+                  <AlertDescription>
+                    <div>
+                      <strong>Requirements:</strong>
+                      <ul className="list-disc pl-5 mt-2 space-y-1">
+                        <li>Row 1 = headers</li>
+                        <li>Columns: <strong>ID</strong>, <strong>Indicator text</strong></li>
+                        <li>Both fields required per row</li>
+                      </ul>
+                    </div>
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              {uploadMode === 'pdf-word' && (
+                <Alert>
+                  <Info className="h-4 w-4" />
+                  <AlertDescription>
+                    AI will extract indicators from your document. This may take 1-5 minutes. 
+                    Please review results carefully, especially if OCR was used.
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-8">
+                <div className="text-center space-y-4">
+                  <div>
+                    {uploadMode === 'excel' ? (
+                      <FileSpreadsheet className="h-12 w-12 mx-auto mb-3 text-primary" />
+                    ) : (
+                      <FileText className="h-12 w-12 mx-auto mb-3 text-primary" />
+                    )}
+                    <p className="text-sm text-muted-foreground mb-4">
+                      {uploadMode === 'excel'
+                        ? 'Upload your Excel file with indicator framework'
+                        : 'Upload a PDF or Word document for AI extraction'}
+                    </p>
+                  </div>
+
+                  <div>
+                    <Input
+                      type="file"
+                      accept={acceptedTypes}
+                      onChange={handleFileSelect}
+                      className="hidden"
+                      id="fileInput"
+                    />
+                    <Label htmlFor="fileInput">
+                      <Button variant="default" className="w-full" asChild>
+                        <span>
+                          <Upload className="mr-2 h-4 w-4" />
+                          {uploadMode === 'excel' ? 'Upload Excel File' : 'Upload PDF/Word Document'}
+                        </span>
+                      </Button>
+                    </Label>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Hidden replace input */}
+          <Input
+            type="file"
+            accept={acceptedTypes}
+            onChange={handleFileSelect}
+            className="hidden"
+            id="replaceFile"
+          />
+        </CardContent>
+      </Card>
+
+      {/* Extraction Progress Card */}
+      {isExtracting && (
+        <ExtractionProgressCard
+          isMinimized={isMinimized}
+          onMinimize={() => setIsMinimized(!isMinimized)}
+          onCancel={handleCancelExtraction}
+          progress={extractionProgress}
+          elapsedSeconds={elapsedSeconds}
+          steps={extractionSteps}
+        />
+      )}
+
+      {/* Unified Preview Table */}
+      {indicators.length > 0 && (
+        <UnifiedPreviewTable
+          indicators={indicators}
+          isExtracting={isExtracting}
+          onEdit={handleEdit}
+          onDownload={handleDownload}
+          onReset={handleReset}
+          validationIssues={validationIssues}
+          hasUnsavedEdits={hasUnsavedEdits}
+        />
+      )}
+
+      {/* Sticky Footer */}
+      <div className="sticky bottom-0 bg-background border-t p-4 flex items-center justify-between">
+        <Button onClick={onPrevious} variant="outline">
+          Cancel
+        </Button>
+        <Button 
+          onClick={handleUseIndicators} 
+          disabled={!canProceed()}
+        >
+          Use These Indicators
+        </Button>
+      </div>
+
+      {/* Replace/Reset Confirmation Dialog */}
+      <AlertDialog open={showReplaceDialog} onOpenChange={setShowReplaceDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Unsaved edits</AlertDialogTitle>
+            <AlertDialogDescription>
+              You have unsaved edits. Continue?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (pendingFile) {
+                  processFile(pendingFile);
+                  setPendingFile(null);
+                } else {
+                  resetState();
+                }
+                setShowReplaceDialog(false);
+              }}
+            >
+              Continue
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
   );
-
 }
