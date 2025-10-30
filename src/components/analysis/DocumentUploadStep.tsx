@@ -388,7 +388,14 @@ export function DocumentUploadStep({ onNext, onPrevious, onDataUpdate, data }: D
         <Alert>
           <Info className="h-4 w-4" />
           <AlertDescription>
-            <strong>Requirements:</strong> Put headers in row 1. Include columns 'ID' and 'Indicator text'.
+            <div>
+              <strong>Requirements:</strong>
+              <ul className="list-disc pl-5 mt-2 space-y-1">
+                <li>Put headers in row 1.</li>
+                <li>Include columns <strong>"ID"</strong> and <strong>"Indicator text"</strong>.</li>
+                <li>Both fields required for each row.</li>
+              </ul>
+            </div>
           </AlertDescription>
         </Alert>
 
