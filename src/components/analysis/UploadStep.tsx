@@ -22,12 +22,9 @@ export function UploadStep({ onNext, onDataUpdate, data }: UploadStepProps) {
   const [version, setVersion] = useState('');
   const [publicationTime, setPublicationTime] = useState('');
   const [organization, setOrganization] = useState('');
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [uploading, setUploading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [showAutoFillOption, setShowAutoFillOption] = useState(false);
   const [previousAnalysisData, setPreviousAnalysisData] = useState<any>(null);
-  const [previousDocument, setPreviousDocument] = useState<any>(null);
-  const [isUsingPreviousDocument, setIsUsingPreviousDocument] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -44,14 +41,8 @@ export function UploadStep({ onNext, onDataUpdate, data }: UploadStepProps) {
       if (versionMatch) setVersion(versionMatch[1].trim());
       if (publishedMatch) setPublicationTime(publishedMatch[1].trim());
       if (organizationMatch) setOrganization(organizationMatch[1].trim());
-
-      // Restore document state
-      if (data.document) {
-        setIsUsingPreviousDocument(true);
-        setPreviousDocument(data.document);
-      }
     }
-  }, [data.project, data.document]);
+  }, [data.project]);
 
   useEffect(() => {
     const checkForPreviousAnalysis = async () => {
@@ -80,35 +71,6 @@ export function UploadStep({ onNext, onDataUpdate, data }: UploadStepProps) {
 
         if (projects && projects.length > 0) {
           setPreviousAnalysisData(projects[0]);
-          
-          // Get the most recent document for this project
-          const { data: documents, error: docError } = await supabase
-            .from('documents')
-            .select('*')
-            .eq('project_id', projects[0].id)
-            .order('created_at', { ascending: false })
-            .limit(1);
-
-          console.log('Found documents:', documents);
-
-          if (!docError && documents && documents.length > 0) {
-            setPreviousDocument(documents[0]);
-          } else {
-            // Fallback: fetch the latest document across all user projects
-            const { data: userDocs, error: userDocError } = await supabase
-              .from('documents')
-              .select('*')
-              .eq('user_id', user.id)
-              .order('created_at', { ascending: false })
-              .limit(1);
-
-            console.log('Fallback last user document:', userDocs);
-
-            if (!userDocError && userDocs && userDocs.length > 0) {
-              setPreviousDocument(userDocs[0]);
-            }
-          }
-          
           setShowAutoFillOption(true);
           console.log('Auto-fill option enabled');
         } else {
@@ -126,9 +88,8 @@ export function UploadStep({ onNext, onDataUpdate, data }: UploadStepProps) {
     }
   }, [user]);
 
-  const fillFromLastAnalysis = (includeDocument = false) => {
+  const fillFromLastAnalysis = () => {
     if (previousAnalysisData) {
-      // Extract data from project description
       const description = previousAnalysisData.description || '';
       const frameworkMatch = description.match(/Framework: ([^|]+)/);
       const versionMatch = description.match(/Version: ([^|]+)/);
@@ -139,66 +100,12 @@ export function UploadStep({ onNext, onDataUpdate, data }: UploadStepProps) {
       if (versionMatch) setVersion(versionMatch[1].trim());
       if (publishedMatch) setPublicationTime(publishedMatch[1].trim());
       if (organizationMatch) setOrganization(organizationMatch[1].trim());
-
-      // If user wants to include document, set up previous document usage
-      if (includeDocument && previousDocument) {
-        setIsUsingPreviousDocument(true);
-        setSelectedFile(null); // Clear any selected file
-      } else {
-        setIsUsingPreviousDocument(false);
-      }
     }
     setShowAutoFillOption(false);
     toast({
       title: "Form filled",
-      description: includeDocument 
-        ? "Previous analysis data and document have been loaded."
-        : "Previous analysis data has been loaded into the form.",
+      description: "Previous analysis data has been loaded into the form.",
     });
-  };
-
-  const removeFile = () => {
-    setSelectedFile(null);
-    setIsUsingPreviousDocument(false);
-  };
-
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      // Reset previous document usage when new file is selected
-      setIsUsingPreviousDocument(false);
-      
-      // Check file type
-      const allowedTypes = [
-        'application/pdf',
-        'application/msword',
-        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-        'application/vnd.ms-excel',
-        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        'text/plain'
-      ];
-      
-      if (!allowedTypes.includes(file.type)) {
-        toast({
-          variant: "destructive",
-          title: "Invalid file type",
-          description: "Please upload a PDF, Word document, Excel file, or text file.",
-        });
-        return;
-      }
-
-      // Check file size (max 10MB)
-      if (file.size > 10 * 1024 * 1024) {
-        toast({
-          variant: "destructive",
-          title: "File too large",
-          description: "Please upload a file smaller than 10MB.",
-        });
-        return;
-      }
-
-      setSelectedFile(file);
-    }
   };
 
   const handleSubmit = async () => {
@@ -238,15 +145,6 @@ export function UploadStep({ onNext, onDataUpdate, data }: UploadStepProps) {
       return;
     }
 
-    if (!selectedFile && !isUsingPreviousDocument) {
-      toast({
-        variant: "destructive",
-        title: "File required",
-        description: "Please select a file to upload.",
-      });
-      return;
-    }
-
     if (!user) {
       toast({
         variant: "destructive",
@@ -256,10 +154,9 @@ export function UploadStep({ onNext, onDataUpdate, data }: UploadStepProps) {
       return;
     }
 
-    setUploading(true);
+    setSubmitting(true);
 
     try {
-      // Create project
       const { data: project, error: projectError } = await supabase
         .from('projects')
         .insert({
@@ -273,73 +170,28 @@ export function UploadStep({ onNext, onDataUpdate, data }: UploadStepProps) {
 
       if (projectError) throw projectError;
 
-      // Upload file to storage or reuse previous document
-      let uploadData;
-      let document;
-
-      if (isUsingPreviousDocument && previousDocument) {
-        // Reuse previous document
-        document = previousDocument;
-        toast({
-          title: "Using previous document",
-          description: "Reusing document from your last analysis.",
-        });
-      } else {
-        // Upload new file to storage
-        const fileExt = selectedFile.name.split('.').pop();
-        const fileName = `${user.id}/${project.id}/${Date.now()}.${fileExt}`;
-        
-        const { data: newUploadData, error: uploadError } = await supabase.storage
-          .from('documents')
-          .upload(fileName, selectedFile);
-
-        if (uploadError) throw uploadError;
-        uploadData = newUploadData;
-
-        // Create document record
-        const { data: newDocument, error: documentError } = await supabase
-          .from('documents')
-          .insert({
-            project_id: project.id,
-            user_id: user.id,
-            filename: selectedFile.name,
-            original_filename: selectedFile.name,
-            content_type: selectedFile.type,
-            file_size: selectedFile.size,
-            storage_path: uploadData.path,
-            upload_status: 'uploaded'
-          })
-          .select()
-          .single();
-
-        if (documentError) throw documentError;
-        document = newDocument;
-      }
-
-      // Update analysis data
-      onDataUpdate({ project, document });
+      onDataUpdate({ project });
 
       toast({
-        title: "Upload successful",
-        description: "Your document has been uploaded successfully.",
+        title: "Success",
+        description: "Framework information saved successfully.",
       });
 
       onNext();
     } catch (error: any) {
-      console.error('Upload error:', error);
+      console.error('Submit error:', error);
       toast({
         variant: "destructive",
-        title: "Upload failed",
-        description: error.message || "There was an error uploading your file.",
+        title: "Failed to save",
+        description: error.message || "There was an error saving your information.",
       });
     } finally {
-      setUploading(false);
+      setSubmitting(false);
     }
   };
 
   return (
     <div className="space-y-6">
-      {/* Auto-fill option */}
       {showAutoFillOption && (
         <Card className="border-primary/20 bg-primary/5">
           <CardContent className="pt-6">
@@ -350,22 +202,14 @@ export function UploadStep({ onNext, onDataUpdate, data }: UploadStepProps) {
                   Would you like to automatically fill the form with data from your last analysis?
                 </p>
               </div>
-              <div className="flex flex-col sm:flex-row gap-2">
+              <div className="flex gap-2">
                 <Button variant="outline" size="sm" onClick={() => setShowAutoFillOption(false)}>
                   No, thanks
                 </Button>
-                <Button size="sm" onClick={() => fillFromLastAnalysis(false)}>
-                  Auto-fill form only
-                </Button>
-                <Button size="sm" onClick={() => fillFromLastAnalysis(true)} disabled={!previousDocument} title={previousDocument ? undefined : 'No previous document found'}>
-                  Auto-fill + Use last document
+                <Button size="sm" onClick={fillFromLastAnalysis}>
+                  Auto-fill Form
                 </Button>
               </div>
-              {previousDocument && (
-                <p className="text-xs text-muted-foreground">
-                  Last document: {previousDocument.original_filename}
-                </p>
-              )}
             </div>
           </CardContent>
         </Card>
@@ -419,69 +263,10 @@ export function UploadStep({ onNext, onDataUpdate, data }: UploadStepProps) {
       </Card>
 
       <Card>
-        <CardHeader>
-          <CardTitle>Upload Sustainability Framework Document *</CardTitle>
-          <CardDescription>
-            Upload your sustainability framework document (PDF, Word, Excel, or text file). Max size: 10MB.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {!selectedFile && !isUsingPreviousDocument ? (
-            <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-8 text-center">
-              <Upload className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-              <p className="text-lg font-medium mb-2">Choose a file to upload</p>
-              <p className="text-sm text-muted-foreground mb-4">
-                PDF, Word, Excel, or text files up to 10MB
-              </p>
-              <Input
-                type="file"
-                accept=".pdf,.doc,.docx,.xls,.xlsx,.txt"
-                onChange={handleFileSelect}
-                className="hidden"
-                id="fileInput"
-              />
-              <Label htmlFor="fileInput">
-                <Button variant="outline" asChild>
-                  <span>Select File</span>
-                </Button>
-              </Label>
-            </div>
-          ) : (
-            <div className="border rounded-lg p-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <FileText className="h-8 w-8 text-primary" />
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <p className="font-medium">
-                        {isUsingPreviousDocument ? previousDocument?.original_filename : selectedFile?.name}
-                      </p>
-                      {isUsingPreviousDocument && (
-                        <Badge variant="secondary" className="text-xs">
-                          From previous analysis
-                        </Badge>
-                      )}
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      {((isUsingPreviousDocument ? previousDocument?.file_size : selectedFile?.size) / 1024 / 1024).toFixed(2)} MB
-                    </p>
-                    {isUsingPreviousDocument && (
-                      <p className="text-xs text-muted-foreground">
-                        This document will be reused from your previous analysis
-                      </p>
-                    )}
-                  </div>
-                </div>
-                <Button variant="ghost" size="sm" onClick={removeFile}>
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          )}
-          
-          <div className="mt-6 flex justify-end">
-            <Button onClick={handleSubmit} disabled={uploading}>
-              {uploading ? 'Uploading...' : 'Continue to Next Step'}
+        <CardContent className="pt-6">
+          <div className="flex justify-end">
+            <Button onClick={handleSubmit} disabled={submitting}>
+              {submitting ? 'Saving...' : 'Continue to Next Step'}
             </Button>
           </div>
         </CardContent>

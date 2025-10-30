@@ -17,6 +17,7 @@ import {
   ArrowLeft
 } from 'lucide-react';
 import { UploadStep } from '@/components/analysis/UploadStep';
+import { DocumentUploadStep } from '@/components/analysis/DocumentUploadStep';
 import { UploadSupportingDocumentsStep } from '@/components/analysis/UploadSupportingDocumentsStep';
 import { FrameworkStep } from '@/components/analysis/FrameworkStep';
 import { AnalysisStep } from '@/components/analysis/AnalysisStep';
@@ -32,11 +33,12 @@ export type AnalysisData = {
 };
 
 const steps = [
-  { id: 1, name: 'Primary Information', icon: Upload, status: 'current' },
-  { id: 2, name: 'Supporting Documents', icon: FileText, status: 'upcoming' },
-  { id: 3, name: 'Legal Framework', icon: Settings, status: 'upcoming' },
-  { id: 4, name: 'AI Analysis', icon: BarChart3, status: 'upcoming' },
-  { id: 5, name: 'View Results', icon: Download, status: 'upcoming' },
+  { id: 1, name: 'Framework Information', icon: Upload, status: 'current' },
+  { id: 2, name: 'Upload Document', icon: FileText, status: 'upcoming' },
+  { id: 3, name: 'Supporting Documents', icon: FileText, status: 'upcoming' },
+  { id: 4, name: 'Legal Framework', icon: Settings, status: 'upcoming' },
+  { id: 5, name: 'AI Analysis', icon: BarChart3, status: 'upcoming' },
+  { id: 6, name: 'View Results', icon: Download, status: 'upcoming' },
 ];
 
 const Analysis = () => {
@@ -78,7 +80,7 @@ const Analysis = () => {
   };
 
   const selectAnotherFramework = () => {
-    setCurrentStep(3);
+    setCurrentStep(4);
     setAnalysisData(prev => ({
       ...prev,
       legalFramework: null,
@@ -108,12 +110,14 @@ const Analysis = () => {
       case 1:
         return <UploadStep onNext={nextStep} onDataUpdate={updateAnalysisData} data={analysisData} />;
       case 2:
-        return <UploadSupportingDocumentsStep onNext={nextStep} onPrevious={previousStep} onDataUpdate={updateAnalysisData} data={analysisData} />;
+        return <DocumentUploadStep onNext={nextStep} onPrevious={previousStep} onDataUpdate={updateAnalysisData} data={analysisData} />;
       case 3:
-        return <FrameworkStep onNext={nextStep} onPrevious={previousStep} onDataUpdate={updateAnalysisData} />;
+        return <UploadSupportingDocumentsStep onNext={nextStep} onPrevious={previousStep} onDataUpdate={updateAnalysisData} data={analysisData} />;
       case 4:
-        return <AnalysisStep onNext={nextStep} onPrevious={previousStep} onDataUpdate={updateAnalysisData} data={analysisData} />;
+        return <FrameworkStep onNext={nextStep} onPrevious={previousStep} onDataUpdate={updateAnalysisData} />;
       case 5:
+        return <AnalysisStep onNext={nextStep} onPrevious={previousStep} onDataUpdate={updateAnalysisData} data={analysisData} />;
+      case 6:
         return <ResultsStep data={analysisData} onStartNew={startNewAnalysis} />;
       default:
         return null;
