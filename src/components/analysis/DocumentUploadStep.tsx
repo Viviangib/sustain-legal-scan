@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
-import { Upload, FileSpreadsheet, FileText, AlertCircle, Info } from 'lucide-react';
+import { Upload, FileSpreadsheet, FileText, AlertCircle, Info, Download } from 'lucide-react';
 import { AnalysisData } from '@/pages/Analysis';
 import * as XLSX from 'xlsx';
 
@@ -325,10 +325,12 @@ export function DocumentUploadStep({ onNext, onPrevious, onDataUpdate, data }: D
 
           {extractedIndicators.length > 10 && (
             <Alert>
-              <Info className="h-4 w-4" />
               <AlertDescription className="flex items-center justify-between">
-                <span>Showing 10 of {extractedIndicators.length} indicators. All will be included in the analysis.</span>
-                <Button onClick={confirmExtraction} className="ml-4">
+                <span className="flex items-center gap-2">
+                  <Info className="h-4 w-4 flex-shrink-0" />
+                  Showing 10 of {extractedIndicators.length} indicators. All will be included in the analysis.
+                </span>
+                <Button onClick={confirmExtraction} className="ml-4 flex-shrink-0">
                   Confirm and Continue
                 </Button>
               </AlertDescription>
@@ -337,7 +339,8 @@ export function DocumentUploadStep({ onNext, onPrevious, onDataUpdate, data }: D
 
           <div className="space-y-2">
             <Button onClick={downloadExcelForEditing} variant="outline" className="w-full">
-              Download Excel to Edit
+              <Download className="mr-2 h-4 w-4" />
+              Download to Edit (Excel)
             </Button>
             <p className="text-sm text-muted-foreground text-center">
               Then re-upload the edited indicator Excel on the previous page.
