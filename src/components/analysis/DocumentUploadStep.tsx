@@ -255,40 +255,6 @@ export function DocumentUploadStep({ onNext, onPrevious, onDataUpdate, data }: D
     setValidationError('');
   };
 
-  // Show validation error state
-  if (validationError) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Sustainability Framework</CardTitle>
-          <CardDescription>
-            There was a problem with your file. Please fix and re-upload.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <Alert variant="destructive">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>
-              {validationError}
-            </AlertDescription>
-          </Alert>
-
-          <div className="flex gap-4">
-            <Button onClick={resetUpload} variant="default" className="flex-1">
-              <Upload className="mr-2 h-4 w-4" />
-              Upload Another File
-            </Button>
-          </div>
-
-          <div className="flex gap-4">
-            <Button onClick={onPrevious} variant="outline" className="flex-1">
-              Previous Step
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
 
   // Processing state
   if (isProcessing || aiExtracting) {
@@ -314,24 +280,42 @@ export function DocumentUploadStep({ onNext, onPrevious, onDataUpdate, data }: D
     );
   }
 
-  // Empty state with pre-upload checklist
-  if (uploadMode === 'none') {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Sustainability Framework</CardTitle>
-          <CardDescription>
-            Upload your framework file (Excel preferred) or let AI extract from PDF/Word. Max 10MB.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <Alert>
-            <Info className="h-4 w-4" />
+  // Main upload interface (always visible)
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Sustainability Framework</CardTitle>
+        <CardDescription>
+          Upload your framework file (Excel preferred) or let AI extract from PDF/Word. Max 10MB.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        <Alert>
+          <Info className="h-4 w-4" />
+          <AlertDescription>
+            <strong>Requirements:</strong> Put headers in row 1. Include columns 'ID' and 'Indicator text'.
+          </AlertDescription>
+        </Alert>
+
+        {validationError && (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
             <AlertDescription>
-              <strong>Requirements:</strong> Put headers in row 1. Include columns 'ID' and 'Indicator text'.
+              {validationError}
             </AlertDescription>
           </Alert>
+        )}
 
+        {(isProcessing || aiExtracting) ? (
+          <div className="flex items-center justify-center py-12">
+            <div className="text-center space-y-4">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+              <p className="text-sm text-muted-foreground">
+                {isProcessing ? 'Validating your framework...' : 'AI is extracting indicators...'}
+              </p>
+            </div>
+          </div>
+        ) : (
           <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-8">
             <div className="text-center space-y-6">
               <div>
@@ -350,6 +334,7 @@ export function DocumentUploadStep({ onNext, onPrevious, onDataUpdate, data }: D
                     className="hidden"
                     id="excelInput"
                     disabled={isProcessing}
+                    key={selectedFile?.name || 'excel-input'}
                   />
                   <Label htmlFor="excelInput">
                     <Button variant="default" className="w-full" asChild disabled={isProcessing}>
@@ -378,6 +363,7 @@ export function DocumentUploadStep({ onNext, onPrevious, onDataUpdate, data }: D
                     className="hidden"
                     id="docInput"
                     disabled={isProcessing || aiExtracting}
+                    key={selectedFile?.name || 'doc-input'}
                   />
                   <Label htmlFor="docInput">
                     <Button variant="outline" className="w-full" asChild disabled={isProcessing || aiExtracting}>
@@ -391,16 +377,15 @@ export function DocumentUploadStep({ onNext, onPrevious, onDataUpdate, data }: D
               </div>
             </div>
           </div>
+        )}
 
-          <div className="flex gap-4">
-            <Button onClick={onPrevious} variant="outline" className="flex-1">
-              Previous Step
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
+        <div className="flex gap-4">
+          <Button onClick={onPrevious} variant="outline" className="flex-1">
+            Previous Step
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
 
-  return null;
 }
