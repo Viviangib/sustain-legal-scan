@@ -32,6 +32,8 @@ export function DocumentUploadStep({ onNext, onPrevious, onDataUpdate, data }: D
   const [validationError, setValidationError] = useState<string>('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [aiExtracting, setAiExtracting] = useState(false);
+  const [showExtractionPreview, setShowExtractionPreview] = useState(false);
+  const [extractedIndicators, setExtractedIndicators] = useState<NormalizedIndicator[]>([]);
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -220,27 +222,29 @@ export function DocumentUploadStep({ onNext, onPrevious, onDataUpdate, data }: D
         { indicator_id: 'E1.1', indicator_text: 'Greenhouse gas emissions (Scope 1)', category: 'Environment', subcategory: 'Emissions', source: 'AI Extracted', notes: '' },
         { indicator_id: 'E1.2', indicator_text: 'Greenhouse gas emissions (Scope 2)', category: 'Environment', subcategory: 'Emissions', source: 'AI Extracted', notes: '' },
         { indicator_id: 'S1.1', indicator_text: 'Employee diversity metrics', category: 'Social', subcategory: 'Workforce', source: 'AI Extracted', notes: '' },
+        { indicator_id: 'S1.2', indicator_text: 'Health and safety incident rate', category: 'Social', subcategory: 'Workforce', source: 'AI Extracted', notes: '' },
+        { indicator_id: 'G1.1', indicator_text: 'Board diversity', category: 'Governance', subcategory: 'Leadership', source: 'AI Extracted', notes: '' },
+        { indicator_id: 'E2.1', indicator_text: 'Water consumption', category: 'Environment', subcategory: 'Resources', source: 'AI Extracted', notes: '' },
+        { indicator_id: 'E2.2', indicator_text: 'Waste generated', category: 'Environment', subcategory: 'Resources', source: 'AI Extracted', notes: '' },
+        { indicator_id: 'S2.1', indicator_text: 'Employee training hours', category: 'Social', subcategory: 'Development', source: 'AI Extracted', notes: '' },
+        { indicator_id: 'G1.2', indicator_text: 'Ethics training completion', category: 'Governance', subcategory: 'Compliance', source: 'AI Extracted', notes: '' },
+        { indicator_id: 'E3.1', indicator_text: 'Renewable energy usage', category: 'Environment', subcategory: 'Energy', source: 'AI Extracted', notes: '' },
+        { indicator_id: 'S3.1', indicator_text: 'Employee turnover rate', category: 'Social', subcategory: 'Workforce', source: 'AI Extracted', notes: '' },
+        { indicator_id: 'G2.1', indicator_text: 'Anti-corruption policies', category: 'Governance', subcategory: 'Ethics', source: 'AI Extracted', notes: '' },
       ];
 
       if (extracted.length === 0) {
         setValidationError("We couldn't find indicators. Try a clearer document or upload an Excel file.");
+        setAiExtracting(false);
         return;
       }
 
-      onDataUpdate({ 
-        document: { 
-          indicators: extracted,
-          filename: file.name,
-          uploadedAt: new Date().toISOString()
-        } 
-      });
-
+      setExtractedIndicators(extracted);
+      setShowExtractionPreview(true);
       toast({
         title: "Extraction complete",
-        description: `Found ${extracted.length} indicators ready for analysis.`,
+        description: `Found ${extracted.length} indicators. Please review the preview.`,
       });
-
-      onNext();
     } catch (error) {
       console.error('AI extraction error:', error);
       setValidationError("Failed to extract indicators. Try uploading an Excel file instead.");
@@ -249,12 +253,97 @@ export function DocumentUploadStep({ onNext, onPrevious, onDataUpdate, data }: D
     }
   };
 
-  const resetUpload = () => {
-    setUploadMode('none');
-    setSelectedFile(null);
-    setValidationError('');
+  const confirmExtraction = () => {
+    onDataUpdate({ 
+      document: { 
+        indicators: extractedIndicators,
+        filename: selectedFile?.name || 'AI Extracted',
+        uploadedAt: new Date().toISOString()
+      } 
+    });
+    onNext();
   };
 
+  const downloadExcelForEditing = () => {
+    const worksheet = XLSX.utils.json_to_sheet(
+      extractedIndicators.map(ind => ({
+        'ID': ind.indicator_id,
+        'Indicator text': ind.indicator_text,
+        'Category': ind.category || '',
+        'Subcategory': ind.subcategory || '',
+        'Source': ind.source || '',
+        'Notes': ind.notes || ''
+      }))
+    );
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Indicators');
+    XLSX.writeFile(workbook, 'extracted_indicators.xlsx');
+    
+    toast({
+      title: "Downloaded",
+      description: "Please review and upload the edited file.",
+    });
+    
+    // Reset to allow re-upload
+    setShowExtractionPreview(false);
+    setExtractedIndicators([]);
+    setSelectedFile(null);
+  };
+
+  // Extraction preview state
+  if (showExtractionPreview) {
+    const previewIndicators = extractedIndicators.slice(0, 10);
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>AI Extraction Results</CardTitle>
+          <CardDescription>
+            Found {extractedIndicators.length} indicators. Review the first 10 below.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="border rounded-lg overflow-hidden">
+            <table className="w-full text-sm">
+              <thead className="bg-muted">
+                <tr>
+                  <th className="px-4 py-2 text-left font-medium">ID</th>
+                  <th className="px-4 py-2 text-left font-medium">Indicator Text</th>
+                  <th className="px-4 py-2 text-left font-medium">Category</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y">
+                {previewIndicators.map((ind, idx) => (
+                  <tr key={idx} className="hover:bg-muted/50">
+                    <td className="px-4 py-2">{ind.indicator_id}</td>
+                    <td className="px-4 py-2">{ind.indicator_text}</td>
+                    <td className="px-4 py-2">{ind.category}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {extractedIndicators.length > 10 && (
+            <Alert>
+              <Info className="h-4 w-4" />
+              <AlertDescription>
+                Showing 10 of {extractedIndicators.length} indicators. All will be included in the analysis.
+              </AlertDescription>
+            </Alert>
+          )}
+
+          <div className="flex gap-4">
+            <Button onClick={confirmExtraction} className="flex-1">
+              Confirm and Continue
+            </Button>
+            <Button onClick={downloadExcelForEditing} variant="outline" className="flex-1">
+              Download Excel to Edit
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   // Processing state
   if (isProcessing || aiExtracting) {
