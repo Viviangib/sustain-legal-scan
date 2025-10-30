@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -30,6 +30,20 @@ export function UploadSupportingDocumentsStep({ onNext, onPrevious, onDataUpdate
   const [uploading, setUploading] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
+
+  // Restore supporting documents when navigating back
+  useEffect(() => {
+    if (data.supportingDocuments && data.supportingDocuments.length > 0) {
+      // Convert stored documents back to the format expected by the component
+      const restoredDocs: SupportingDocument[] = data.supportingDocuments.map(doc => ({
+        id: doc.id,
+        file: null as any, // We can't restore the File object, but mark as uploaded
+        description: doc.metadata?.description || '',
+        uploaded: true,
+      }));
+      setSupportingDocuments(restoredDocs);
+    }
+  }, [data.supportingDocuments]);
 
   const addDocument = () => {
     setSupportingDocuments(prev => [...prev, { file: null as any, description: '' }]);

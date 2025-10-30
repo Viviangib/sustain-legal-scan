@@ -106,7 +106,7 @@ const Analysis = () => {
   const renderStepContent = () => {
     switch (currentStep) {
       case 1:
-        return <UploadStep onNext={nextStep} onDataUpdate={updateAnalysisData} />;
+        return <UploadStep onNext={nextStep} onDataUpdate={updateAnalysisData} data={analysisData} />;
       case 2:
         return <UploadSupportingDocumentsStep onNext={nextStep} onPrevious={previousStep} onDataUpdate={updateAnalysisData} data={analysisData} />;
       case 3:

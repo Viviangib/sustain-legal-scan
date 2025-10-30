@@ -14,9 +14,10 @@ import { AnalysisData } from '@/pages/Analysis';
 interface UploadStepProps {
   onNext: () => void;
   onDataUpdate: (data: Partial<AnalysisData>) => void;
+  data: AnalysisData;
 }
 
-export function UploadStep({ onNext, onDataUpdate }: UploadStepProps) {
+export function UploadStep({ onNext, onDataUpdate, data }: UploadStepProps) {
   const [frameworkName, setFrameworkName] = useState('');
   const [version, setVersion] = useState('');
   const [publicationTime, setPublicationTime] = useState('');
@@ -29,6 +30,28 @@ export function UploadStep({ onNext, onDataUpdate }: UploadStepProps) {
   const [isUsingPreviousDocument, setIsUsingPreviousDocument] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
+
+  // Restore form state from parent data when navigating back
+  useEffect(() => {
+    if (data.project) {
+      const description = data.project.description || '';
+      const frameworkMatch = description.match(/Framework: ([^|]+)/);
+      const versionMatch = description.match(/Version: ([^|]+)/);
+      const publishedMatch = description.match(/Published: ([^|]+)/);
+      const organizationMatch = description.match(/Organization: (.+)/);
+
+      if (frameworkMatch) setFrameworkName(frameworkMatch[1].trim());
+      if (versionMatch) setVersion(versionMatch[1].trim());
+      if (publishedMatch) setPublicationTime(publishedMatch[1].trim());
+      if (organizationMatch) setOrganization(organizationMatch[1].trim());
+
+      // Restore document state
+      if (data.document) {
+        setIsUsingPreviousDocument(true);
+        setPreviousDocument(data.document);
+      }
+    }
+  }, [data.project, data.document]);
 
   useEffect(() => {
     const checkForPreviousAnalysis = async () => {
