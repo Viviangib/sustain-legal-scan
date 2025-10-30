@@ -400,7 +400,7 @@ export function DocumentUploadStep({ onNext, onPrevious, onDataUpdate, data }: D
       <CardHeader>
         <CardTitle>Sustainability Indicators</CardTitle>
         <CardDescription>
-          Upload your framework file (Excel preferred) or let AI extract from PDF/Word. Max 10MB.
+          Upload your sustainability indicators in Excel or let AI extract indicators from a PDF/Word document. Max size: 10MB.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
