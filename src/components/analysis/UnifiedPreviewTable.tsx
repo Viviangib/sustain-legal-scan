@@ -1,11 +1,10 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Download, RotateCcw, AlertCircle, Info } from 'lucide-react';
+import { Download, AlertCircle, Info } from 'lucide-react';
 import { useState } from 'react';
-import * as XLSX from 'xlsx';
 
 interface NormalizedIndicator {
   indicator_id: string;
@@ -27,7 +26,7 @@ interface UnifiedPreviewTableProps {
   isExtracting: boolean;
   onEdit: (index: number, field: keyof NormalizedIndicator, value: string) => void;
   onDownload: () => void;
-  onReset: () => void;
+  onNext: () => void;
   validationIssues: ValidationIssue[];
   hasUnsavedEdits: boolean;
 }
@@ -37,7 +36,7 @@ export function UnifiedPreviewTable({
   isExtracting,
   onEdit,
   onDownload,
-  onReset,
+  onNext,
   validationIssues,
   hasUnsavedEdits
 }: UnifiedPreviewTableProps) {
@@ -64,11 +63,7 @@ export function UnifiedPreviewTable({
       <CardHeader>
         <div className="flex items-start justify-between">
           <div>
-            <CardTitle>
-              {isExtracting
-                ? 'Preview: first 10 indicators'
-                : `Showing 10 of ${indicators.length} indicators`}
-            </CardTitle>
+            <CardTitle>AI Extraction Results</CardTitle>
             {validationIssues.length > 0 && (
               <div className="flex items-center gap-2 mt-2">
                 <Badge variant="destructive" className="cursor-pointer" onClick={() => setShowValidation(true)}>
@@ -78,13 +73,9 @@ export function UnifiedPreviewTable({
             )}
           </div>
           <div className="flex items-center gap-2">
-            <Button onClick={onDownload} variant="outline" size="sm">
+            <Button onClick={onDownload} className="bg-green-600 hover:bg-green-700" size="sm">
               <Download className="mr-2 h-4 w-4" />
               Download
-            </Button>
-            <Button onClick={onReset} variant="outline" size="sm">
-              <RotateCcw className="mr-2 h-4 w-4" />
-              Reset
             </Button>
           </div>
         </div>
@@ -116,7 +107,6 @@ export function UnifiedPreviewTable({
               <tr>
                 <th className="px-4 py-2 text-left font-medium w-32">ID</th>
                 <th className="px-4 py-2 text-left font-medium">Indicator Text</th>
-                <th className="px-4 py-2 text-left font-medium w-32">Category</th>
               </tr>
             </thead>
             <tbody className="divide-y">
@@ -136,27 +126,25 @@ export function UnifiedPreviewTable({
                       className="h-8 text-sm"
                     />
                   </td>
-                  <td className="px-4 py-2">
-                    <Input
-                      value={ind.category || ''}
-                      onChange={(e) => onEdit(idx, 'category', e.target.value)}
-                      className="h-8 text-sm"
-                    />
-                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
 
-        {indicators.length > 10 && (
-          <Alert>
-            <Info className="h-4 w-4" />
-            <AlertDescription>
-              Showing first 10 of {indicators.length} indicators. All will be included in analysis.
-            </AlertDescription>
-          </Alert>
-        )}
+        <Alert>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Info className="h-4 w-4" />
+              <span className="text-sm">
+                Showing 10 of {indicators.length} indicators. All will be included in the analysis.
+              </span>
+            </div>
+            <Button onClick={onNext} className="ml-4">
+              Use These Indicators
+            </Button>
+          </div>
+        </Alert>
 
         {hasUnsavedEdits && (
           <Alert>

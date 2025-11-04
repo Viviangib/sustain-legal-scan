@@ -528,8 +528,7 @@ export function DocumentUploadStep({ onNext, onPrevious, onDataUpdate, data }: D
                 <Alert>
                   <Info className="h-4 w-4" />
                   <AlertDescription>
-                    AI will extract indicators from your document. This may take 1-5 minutes. 
-                    Please review results carefully, especially if OCR was used.
+                    AI will extract indicators from your document. Please review the results, and if you edit the Excel, upload the updated file again.
                   </AlertDescription>
                 </Alert>
               )}
@@ -544,7 +543,7 @@ export function DocumentUploadStep({ onNext, onPrevious, onDataUpdate, data }: D
                     )}
                     <p className="text-sm text-muted-foreground mb-4">
                       {uploadMode === 'excel'
-                        ? 'Upload your Excel file with indicator framework'
+                        ? 'Upload your Excel file with sustainability indicators'
                         : 'Upload a PDF or Word document for AI extraction'}
                     </p>
                   </div>
@@ -585,12 +584,7 @@ export function DocumentUploadStep({ onNext, onPrevious, onDataUpdate, data }: D
       {/* Extraction Progress Card */}
       {isExtracting && (
         <ExtractionProgressCard
-          isMinimized={isMinimized}
-          onMinimize={() => setIsMinimized(!isMinimized)}
           onCancel={handleCancelExtraction}
-          progress={extractionProgress}
-          elapsedSeconds={elapsedSeconds}
-          steps={extractionSteps}
         />
       )}
 
@@ -601,7 +595,7 @@ export function DocumentUploadStep({ onNext, onPrevious, onDataUpdate, data }: D
           isExtracting={isExtracting}
           onEdit={handleEdit}
           onDownload={handleDownload}
-          onReset={handleReset}
+          onNext={handleUseIndicators}
           validationIssues={validationIssues}
           hasUnsavedEdits={hasUnsavedEdits}
         />
@@ -610,13 +604,10 @@ export function DocumentUploadStep({ onNext, onPrevious, onDataUpdate, data }: D
       {/* Sticky Footer */}
       <div className="sticky bottom-0 bg-background border-t p-4 flex items-center justify-between">
         <Button onClick={onPrevious} variant="outline">
-          Cancel
+          Previous Step
         </Button>
-        <Button 
-          onClick={handleUseIndicators} 
-          disabled={!canProceed()}
-        >
-          Use These Indicators
+        <Button onClick={onNext} variant="outline">
+          Next Step
         </Button>
       </div>
 
