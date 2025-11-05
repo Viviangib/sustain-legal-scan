@@ -286,17 +286,20 @@ export function AnalysisStep({ onNext, onPrevious, onDataUpdate, data }: Analysi
                 Download Indicator Analysis (Excel)
               </Button>
             </div>
-            
-            <div className="flex justify-between">
-              {onPrevious && (
-                <Button onClick={onPrevious} variant="outline">
-                  Previous Step
-                </Button>
-              )}
-              <Button onClick={onNext} className={onPrevious ? '' : 'ml-auto'}>Next Step</Button>
-            </div>
           </div>
         )}
+        
+        {/* Navigation buttons - always visible */}
+        <div className="flex justify-between pt-4 border-t">
+          {onPrevious && (
+            <Button onClick={onPrevious} variant="outline">
+              Previous Step
+            </Button>
+          )}
+          <Button onClick={onNext} className={onPrevious ? '' : 'ml-auto'}>
+            Next Step
+          </Button>
+        </div>
       </CardContent>
     </Card>
   );
