@@ -528,7 +528,7 @@ export function DocumentUploadStep({ onNext, onPrevious, onDataUpdate, data }: D
                 <Alert>
                   <Info className="h-4 w-4" />
                   <AlertDescription>
-                    AI will extract indicators from your document. Please review the results, and if you edit the Excel, upload the updated file again.
+                    AI will extract indicators from your document. Please ensure to review the results before proceeding. If you edit the Excel, please re-upload it via the Excel tab.
                   </AlertDescription>
                 </Alert>
               )}

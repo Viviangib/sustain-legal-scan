@@ -63,7 +63,7 @@ export function UnifiedPreviewTable({
       <CardHeader>
         <div className="flex items-start justify-between">
           <div>
-            <CardTitle>AI Extraction Results</CardTitle>
+            <CardTitle>Indicator Preview</CardTitle>
             {validationIssues.length > 0 && (
               <div className="flex items-center gap-2 mt-2">
                 <Badge variant="destructive" className="cursor-pointer" onClick={() => setShowValidation(true)}>
@@ -133,16 +133,11 @@ export function UnifiedPreviewTable({
         </div>
 
         <Alert>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Info className="h-4 w-4" />
-              <span className="text-sm">
-                Showing 10 of {indicators.length} indicators. All will be included in the analysis.
-              </span>
-            </div>
-            <Button onClick={onNext} className="ml-4">
-              Use These Indicators
-            </Button>
+          <div className="flex items-center gap-2">
+            <Info className="h-4 w-4" />
+            <span className="text-sm">
+              Showing 10 of {indicators.length} indicators. All will be included in the analysis.
+            </span>
           </div>
         </Alert>
 
