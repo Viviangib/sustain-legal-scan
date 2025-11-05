@@ -159,7 +159,7 @@ Report generated on ${new Date().toLocaleString()}
             {!isCreating && !isCompleted && (
               <Button onClick={createReport}>
                 <FileText className="h-4 w-4 mr-2" />
-                Create Summary Report
+                Generate Summary Report
               </Button>
             )}
             {isCreating && (
