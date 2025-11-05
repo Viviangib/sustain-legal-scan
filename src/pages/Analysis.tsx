@@ -38,7 +38,7 @@ const steps = [
   { id: 3, name: 'Supporting Documents', icon: FileText, status: 'upcoming' },
   { id: 4, name: 'Legal Framework', icon: Settings, status: 'upcoming' },
   { id: 5, name: 'AI Analysis', icon: BarChart3, status: 'upcoming' },
-  { id: 6, name: 'View Results', icon: Download, status: 'upcoming' },
+  { id: 6, name: 'Summary Report', icon: Download, status: 'upcoming' },
 ];
 
 const Analysis = () => {

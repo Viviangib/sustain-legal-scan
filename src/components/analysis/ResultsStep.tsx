@@ -106,62 +106,30 @@ Report generated on ${new Date().toLocaleString()}
 
   return (
     <div className="space-y-6">
-      {/* Alignment Distribution */}
+      {/* Analysis Details */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <PieChart className="h-5 w-5" />
-            <span>Indicator Alignment Distribution</span>
-          </CardTitle>
-          <CardDescription>
-            Distribution of alignment levels across all {results.total_indicators} indicators
-          </CardDescription>
+          <CardTitle>Analysis Details</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="h-80 flex">
-            <div className="flex-1">
-              <ResponsiveContainer width="100%" height="100%">
-                <RechartsPieChart>
-                  <Pie
-                    data={alignmentData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={60}
-                    outerRadius={120}
-                    paddingAngle={2}
-                    dataKey="value"
-                  >
-                    {alignmentData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip 
-                    formatter={(value, name) => {
-                      const total = alignmentData.reduce((sum, item) => sum + item.value, 0);
-                      const percentage = total > 0 ? ((value as number / total) * 100).toFixed(1) : '0.0';
-                      return [`${value} indicators (${percentage}%)`, name];
-                    }}
-                    labelStyle={{ color: '#000' }}
-                  />
-                  <Legend 
-                    verticalAlign="middle" 
-                    align="right"
-                    layout="vertical"
-                    iconType="circle"
-                    wrapperStyle={{ paddingLeft: '20px' }}
-                    formatter={(value, entry) => {
-                      const item = alignmentData.find(item => item.name === value);
-                      const total = alignmentData.reduce((sum, item) => sum + item.value, 0);
-                      const percentage = total > 0 && item ? ((item.value / total) * 100).toFixed(1) : '0.0';
-                      return (
-                        <span style={{ color: entry.color, fontSize: '14px' }}>
-                          {value}: {item?.value || 0} ({percentage}%)
-                        </span>
-                      );
-                    }}
-                  />
-                </RechartsPieChart>
-              </ResponsiveContainer>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+            <div>
+              <p className="font-medium">Project:</p>
+              <p className="text-muted-foreground">{data.project?.name}</p>
+            </div>
+            <div>
+              <p className="font-medium">Legal Framework:</p>
+              <p className="text-muted-foreground">{data.legalFramework?.name}</p>
+            </div>
+            <div>
+              <p className="font-medium">Document:</p>
+              <p className="text-muted-foreground">{data.document?.original_filename}</p>
+            </div>
+            <div>
+              <p className="font-medium">Analysis Date:</p>
+              <p className="text-muted-foreground">
+                {new Date(data.analysisResults.created_at).toLocaleDateString()}
+              </p>
             </div>
           </div>
         </CardContent>
@@ -218,23 +186,6 @@ Report generated on ${new Date().toLocaleString()}
         </Card>
       </div>
 
-      {/* Recommendations */}
-      <Card>
-        <CardHeader>
-          <CardTitle>AI Recommendations</CardTitle>
-          <CardDescription>
-            Specific actions to improve your compliance score
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="prose max-w-none">
-            <div className="whitespace-pre-wrap text-sm">
-              {data.analysisResults.recommendations}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
       {/* Action Buttons */}
       <Card>
         <CardContent className="pt-6">
@@ -251,34 +202,6 @@ Report generated on ${new Date().toLocaleString()}
         </CardContent>
       </Card>
 
-      {/* Analysis Details */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Analysis Details</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-            <div>
-              <p className="font-medium">Project:</p>
-              <p className="text-muted-foreground">{data.project?.name}</p>
-            </div>
-            <div>
-              <p className="font-medium">Legal Framework:</p>
-              <p className="text-muted-foreground">{data.legalFramework?.name}</p>
-            </div>
-            <div>
-              <p className="font-medium">Document:</p>
-              <p className="text-muted-foreground">{data.document?.original_filename}</p>
-            </div>
-            <div>
-              <p className="font-medium">Analysis Date:</p>
-              <p className="text-muted-foreground">
-                {new Date(data.analysisResults.created_at).toLocaleDateString()}
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 }
