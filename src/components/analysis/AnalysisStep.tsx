@@ -237,9 +237,6 @@ export function AnalysisStep({ onNext, onPrevious, onDataUpdate, data }: Analysi
           <BarChart3 className="h-5 w-5" />
           <span>AI Analysis</span>
         </CardTitle>
-        <CardDescription>
-          Analyzing your framework against {data.legalFramework?.name} requirements
-        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         {!results ? (
