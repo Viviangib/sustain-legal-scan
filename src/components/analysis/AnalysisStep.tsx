@@ -293,7 +293,7 @@ export function AnalysisStep({ onNext, onPrevious, onDataUpdate, data }: Analysi
                   Previous Step
                 </Button>
               )}
-              <Button onClick={onNext} className={onPrevious ? '' : 'ml-auto'}>View Full Results</Button>
+              <Button onClick={onNext} className={onPrevious ? '' : 'ml-auto'}>Next Step</Button>
             </div>
           </div>
         )}
