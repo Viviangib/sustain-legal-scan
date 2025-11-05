@@ -3,9 +3,10 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
-import { Download, BarChart3, AlertTriangle, CheckCircle, FileText, PieChart } from 'lucide-react';
+import { Download, BarChart3, AlertTriangle, CheckCircle, FileText, PieChart, Loader2, X } from 'lucide-react';
 import { PieChart as RechartsPieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
 import { AnalysisData } from '@/pages/Analysis';
+import { useState } from 'react';
 
 interface ResultsStepProps {
   data: AnalysisData;
@@ -15,8 +16,17 @@ interface ResultsStepProps {
 
 export function ResultsStep({ data, onStartNew, onPrevious }: ResultsStepProps) {
   const { toast } = useToast();
+  const [isCreating, setIsCreating] = useState(false);
+  const [isCompleted, setIsCompleted] = useState(false);
+  const [reportBlob, setReportBlob] = useState<Blob | null>(null);
 
-  const exportReport = () => {
+  const createReport = async () => {
+    setIsCreating(true);
+    
+    // Simulate report creation (replace with actual report generation)
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    
+    if (!isCreating) return; // Check if cancelled
     const results = data.analysisResults.results;
     const score = data.analysisResults.compliance_score;
     
@@ -54,12 +64,34 @@ Effective Date: ${data.legalFramework?.effective_date}
 Report generated on ${new Date().toLocaleString()}
     `.trim();
 
-    // Create and download the file
-    const blob = new Blob([reportContent], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
+    // Create the blob for docx (currently txt format)
+    const blob = new Blob([reportContent], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+    setReportBlob(blob);
+    setIsCreating(false);
+    setIsCompleted(true);
+
+    toast({
+      title: "Report created",
+      description: "Your detailed analysis report is ready to download.",
+    });
+  };
+
+  const cancelReport = () => {
+    setIsCreating(false);
+    toast({
+      title: "Report creation cancelled",
+      description: "The report creation has been cancelled.",
+      variant: "destructive"
+    });
+  };
+
+  const downloadReport = () => {
+    if (!reportBlob) return;
+    
+    const url = URL.createObjectURL(reportBlob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `sustainability-analysis-report-${data.project?.name || 'project'}-${new Date().toISOString().split('T')[0]}.txt`;
+    link.download = `sustainability-analysis-report-${data.project?.name || 'project'}-${new Date().toISOString().split('T')[0]}.docx`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -123,10 +155,35 @@ Report generated on ${new Date().toLocaleString()}
               <p className="text-muted-foreground">{data.legalFramework?.name}</p>
             </div>
           </div>
-          <Button onClick={exportReport}>
-            <Download className="h-4 w-4 mr-2" />
-            Export Summary Report
-          </Button>
+          <div className="flex items-center gap-2">
+            {!isCreating && !isCompleted && (
+              <Button onClick={createReport}>
+                <FileText className="h-4 w-4 mr-2" />
+                Create Summary Report
+              </Button>
+            )}
+            {isCreating && (
+              <>
+                <Button disabled>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Creating Report...
+                </Button>
+                <Button 
+                  variant="destructive" 
+                  size="icon"
+                  onClick={cancelReport}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </>
+            )}
+            {isCompleted && (
+              <Button onClick={downloadReport}>
+                <Download className="h-4 w-4 mr-2" />
+                Download
+              </Button>
+            )}
+          </div>
         </CardContent>
       </Card>
 
