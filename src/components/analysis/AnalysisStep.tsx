@@ -258,6 +258,9 @@ export function AnalysisStep({ onNext, onPrevious, onDataUpdate, data }: Analysi
                     <span>{progress}%</span>
                   </div>
                   <Progress value={progress} />
+                  <p className="text-sm text-muted-foreground mt-2">
+                    This process normally takes 5 to 10 minutes. Please keep this page open while the analysis is running.
+                  </p>
                 </div>
               )}
               
