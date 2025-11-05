@@ -122,16 +122,6 @@ Report generated on ${new Date().toLocaleString()}
               <p className="font-medium">Legal Framework:</p>
               <p className="text-muted-foreground">{data.legalFramework?.name}</p>
             </div>
-            <div>
-              <p className="font-medium">Document:</p>
-              <p className="text-muted-foreground">{data.document?.original_filename}</p>
-            </div>
-            <div>
-              <p className="font-medium">Analysis Date:</p>
-              <p className="text-muted-foreground">
-                {new Date(data.analysisResults.created_at).toLocaleDateString()}
-              </p>
-            </div>
           </div>
           <Button onClick={exportReport}>
             <Download className="h-4 w-4 mr-2" />
