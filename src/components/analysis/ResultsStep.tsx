@@ -165,7 +165,7 @@ Report generated on ${new Date().toLocaleString()}
               <>
                 <Button disabled>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Creating Report...
+                  Generating Report...
                 </Button>
                 <Button 
                   variant="destructive" 
@@ -177,9 +177,9 @@ Report generated on ${new Date().toLocaleString()}
               </>
             )}
             {isCompleted && (
-              <Button onClick={downloadReport}>
+              <Button variant="ghost" onClick={downloadReport}>
                 <Download className="h-4 w-4 mr-2" />
-                Download
+                Download Summary Report (Word)
               </Button>
             )}
           </div>
