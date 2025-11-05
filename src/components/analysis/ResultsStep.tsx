@@ -114,7 +114,7 @@ Report generated on ${new Date().toLocaleString()}
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
             <div>
-              <p className="font-medium">Project:</p>
+              <p className="font-medium">Sustainability Framework:</p>
               <p className="text-muted-foreground">{data.project?.name}</p>
             </div>
             <div>
@@ -136,31 +136,7 @@ Report generated on ${new Date().toLocaleString()}
       </Card>
 
       {/* Detailed Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center space-x-2">
-              <FileText className="h-8 w-8 text-blue-600" />
-              <div>
-                <p className="text-2xl font-bold">{results.total_indicators}</p>
-                <p className="text-sm text-muted-foreground">Total Indicators</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center space-x-2">
-              <CheckCircle className="h-8 w-8 text-green-600" />
-              <div>
-                <p className="text-2xl font-bold">{results.compliant_indicators}</p>
-                <p className="text-sm text-muted-foreground">Compliant</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center space-x-2">
