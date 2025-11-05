@@ -5,7 +5,7 @@ import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { BarChart3, Loader2, Download, X } from 'lucide-react';
+import { BarChart3, Loader2, Download } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { AnalysisData } from '@/pages/Analysis';
 
@@ -22,15 +22,6 @@ export function AnalysisStep({ onNext, onPrevious, onDataUpdate, data }: Analysi
   const [results, setResults] = useState<any>(null);
   const { user } = useAuth();
   const { toast } = useToast();
-
-  const cancelAnalysis = () => {
-    setAnalyzing(false);
-    setProgress(0);
-    toast({
-      title: "Analysis cancelled",
-      description: "The analysis has been stopped.",
-    });
-  };
 
   const runAnalysis = async () => {
     if (!data.project || !data.document || !data.legalFramework) {
@@ -258,17 +249,6 @@ export function AnalysisStep({ onNext, onPrevious, onDataUpdate, data }: Analysi
                     <span>{progress}%</span>
                   </div>
                   <Progress value={progress} />
-                  <div className="flex justify-center pt-2">
-                    <Button 
-                      onClick={cancelAnalysis} 
-                      variant="destructive" 
-                      size="sm"
-                      className="gap-1"
-                    >
-                      <X className="h-4 w-4" />
-                      Stop Analysis
-                    </Button>
-                  </div>
                 </div>
               )}
               
