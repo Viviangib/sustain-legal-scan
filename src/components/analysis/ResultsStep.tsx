@@ -177,7 +177,7 @@ Report generated on ${new Date().toLocaleString()}
               </>
             )}
             {isCompleted && (
-              <Button variant="ghost" onClick={downloadReport}>
+              <Button variant="outline" onClick={downloadReport}>
                 <Download className="h-4 w-4 mr-2" />
                 Download Summary Report (Word)
               </Button>
