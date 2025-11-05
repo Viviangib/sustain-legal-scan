@@ -231,76 +231,78 @@ export function AnalysisStep({ onNext, onPrevious, onDataUpdate, data }: Analysi
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center space-x-2">
-          <BarChart3 className="h-5 w-5" />
-          <span>AI Analysis</span>
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {!results ? (
-          <div className="space-y-4">
-            {analyzing && (
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span>Analysis Progress</span>
-                  <span>{progress}%</span>
+    <div className="space-y-4">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2">
+            <BarChart3 className="h-5 w-5" />
+            <span>AI Analysis</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {!results ? (
+            <div className="space-y-4">
+              {analyzing && (
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span>Analysis Progress</span>
+                    <span>{progress}%</span>
+                  </div>
+                  <Progress value={progress} />
                 </div>
-                <Progress value={progress} />
+              )}
+              
+              <div className="text-center py-8">
+                <Button onClick={runAnalysis} disabled={analyzing}>
+                  {analyzing ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Analyzing...
+                    </>
+                  ) : (
+                    <>
+                      <BarChart3 className="h-4 w-4 mr-2" />
+                      Start Analysis
+                    </>
+                  )}
+                </Button>
               </div>
-            )}
-            
-            <div className="text-center py-8">
-              <Button onClick={runAnalysis} disabled={analyzing}>
-                {analyzing ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Analyzing...
-                  </>
-                ) : (
-                  <>
-                    <BarChart3 className="h-4 w-4 mr-2" />
-                    Start Analysis
-                  </>
-                )}
-              </Button>
             </div>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            <div className="text-center py-8">
-              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-green-100 flex items-center justify-center">
-                <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
+          ) : (
+            <div className="space-y-4">
+              <div className="text-center py-8">
+                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-green-100 flex items-center justify-center">
+                  <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+                <h3 className="text-lg font-semibold mb-2">Analysis Complete</h3>
+                <p className="text-muted-foreground">Your sustainability framework analysis has been completed successfully.</p>
               </div>
-              <h3 className="text-lg font-semibold mb-2">Analysis Complete</h3>
-              <p className="text-muted-foreground">Your sustainability framework analysis has been completed successfully.</p>
+              
+              {/* Download button for indicator analysis */}
+              <div className="text-center pb-4">
+                <Button onClick={downloadIndicatorAnalysis} variant="outline" className="mr-4">
+                  <Download className="h-4 w-4 mr-2" />
+                  Download Indicator Analysis (Excel)
+                </Button>
+              </div>
             </div>
-            
-            {/* Download button for indicator analysis */}
-            <div className="text-center pb-4">
-              <Button onClick={downloadIndicatorAnalysis} variant="outline" className="mr-4">
-                <Download className="h-4 w-4 mr-2" />
-                Download Indicator Analysis (Excel)
-              </Button>
-            </div>
-          </div>
-        )}
-        
-        {/* Navigation buttons - always visible */}
-        <div className="flex justify-between pt-4 border-t">
-          {onPrevious && (
-            <Button onClick={onPrevious} variant="outline">
-              Previous Step
-            </Button>
           )}
-          <Button onClick={onNext} className={onPrevious ? '' : 'ml-auto'}>
-            Next Step
+        </CardContent>
+      </Card>
+      
+      {/* Navigation buttons - outside the card */}
+      <div className="flex justify-between">
+        {onPrevious && (
+          <Button onClick={onPrevious} variant="outline">
+            Previous Step
           </Button>
-        </div>
-      </CardContent>
-    </Card>
+        )}
+        <Button onClick={onNext} className={onPrevious ? '' : 'ml-auto'}>
+          Next Step
+        </Button>
+      </div>
+    </div>
   );
 }
