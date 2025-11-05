@@ -606,9 +606,19 @@ export function DocumentUploadStep({ onNext, onPrevious, onDataUpdate, data }: D
         <Button onClick={onPrevious} variant="outline">
           Previous Step
         </Button>
-        <Button onClick={onNext} variant="outline">
-          Next Step
-        </Button>
+        {indicators.length === 0 ? (
+          <Button disabled variant="outline">
+            Upload indicators to continue
+          </Button>
+        ) : !canProceed() ? (
+          <Button disabled variant="outline">
+            Fix validation issues to continue
+          </Button>
+        ) : (
+          <Button onClick={handleUseIndicators}>
+            Continue to Next Step
+          </Button>
+        )}
       </div>
 
       {/* Replace/Reset Confirmation Dialog */}
