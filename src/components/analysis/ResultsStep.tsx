@@ -113,7 +113,7 @@ Report generated on ${new Date().toLocaleString()}
           <CardTitle>Analysis Details</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm mb-4">
             <div>
               <p className="font-medium">Sustainability Framework:</p>
               <p className="text-muted-foreground">{data.project?.name}</p>
@@ -133,29 +133,21 @@ Report generated on ${new Date().toLocaleString()}
               </p>
             </div>
           </div>
-        </CardContent>
-      </Card>
-
-      {/* Action Buttons */}
-      <Card>
-        <CardContent className="pt-6">
-          <div className="flex flex-col sm:flex-row gap-4">
-            <Button onClick={exportReport} className="flex-1">
-              <Download className="h-4 w-4 mr-2" />
-              Export Summary Report
-            </Button>
-            <Button variant="outline" className="flex-1" onClick={onStartNew}>
-              <BarChart3 className="h-4 w-4 mr-2" />
-              Start New Analysis
-            </Button>
-          </div>
+          <Button onClick={exportReport}>
+            <Download className="h-4 w-4 mr-2" />
+            Export Summary Report
+          </Button>
         </CardContent>
       </Card>
 
       {/* Navigation */}
-      <div className="flex justify-start">
+      <div className="flex justify-between items-center">
         <Button variant="outline" onClick={onPrevious}>
           Previous Step
+        </Button>
+        <Button variant="outline" onClick={onStartNew}>
+          <BarChart3 className="h-4 w-4 mr-2" />
+          Start New Analysis
         </Button>
       </div>
     </div>
