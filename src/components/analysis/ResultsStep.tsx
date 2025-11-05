@@ -10,9 +10,10 @@ import { AnalysisData } from '@/pages/Analysis';
 interface ResultsStepProps {
   data: AnalysisData;
   onStartNew?: () => void;
+  onPrevious?: () => void;
 }
 
-export function ResultsStep({ data, onStartNew }: ResultsStepProps) {
+export function ResultsStep({ data, onStartNew, onPrevious }: ResultsStepProps) {
   const { toast } = useToast();
 
   const exportReport = () => {
@@ -135,33 +136,6 @@ Report generated on ${new Date().toLocaleString()}
         </CardContent>
       </Card>
 
-      {/* Detailed Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center space-x-2">
-              <AlertTriangle className="h-8 w-8 text-yellow-600" />
-              <div>
-                <p className="text-2xl font-bold">{results.gaps_identified}</p>
-                <p className="text-sm text-muted-foreground">Gaps Found</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center space-x-2">
-              <AlertTriangle className="h-8 w-8 text-red-600" />
-              <div>
-                <p className="text-2xl font-bold">{results.critical_gaps}</p>
-                <p className="text-sm text-muted-foreground">Critical Issues</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
       {/* Action Buttons */}
       <Card>
         <CardContent className="pt-6">
@@ -178,6 +152,12 @@ Report generated on ${new Date().toLocaleString()}
         </CardContent>
       </Card>
 
+      {/* Navigation */}
+      <div className="flex justify-start">
+        <Button variant="outline" onClick={onPrevious}>
+          Previous Step
+        </Button>
+      </div>
     </div>
   );
 }
