@@ -22,6 +22,7 @@ interface LegalFramework {
   category: string;
   jurisdiction: string;
   effective_date: string;
+  version?: string;
 }
 
 export function FrameworkStep({ onNext, onPrevious, onDataUpdate }: FrameworkStepProps) {
@@ -138,7 +139,7 @@ export function FrameworkStep({ onNext, onPrevious, onDataUpdate }: FrameworkSte
                       <p className="text-muted-foreground mb-3">{framework.description}</p>
                       <div className="flex items-center space-x-4 text-sm text-muted-foreground">
                         <span>Jurisdiction: {framework.jurisdiction}</span>
-                        <span>Effective: {new Date(framework.effective_date).toLocaleDateString()}</span>
+                        <span>Effective: {framework.version || new Date(framework.effective_date).toLocaleDateString()}</span>
                       </div>
                     </div>
                   </Label>
