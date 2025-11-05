@@ -23,6 +23,15 @@ export function AnalysisStep({ onNext, onPrevious, onDataUpdate, data }: Analysi
   const { user } = useAuth();
   const { toast } = useToast();
 
+  const cancelAnalysis = () => {
+    setAnalyzing(false);
+    setProgress(0);
+    toast({
+      title: "Analysis cancelled",
+      description: "The analysis has been stopped.",
+    });
+  };
+
   const runAnalysis = async () => {
     if (!data.project || !data.document || !data.legalFramework) {
       toast({
@@ -253,19 +262,31 @@ export function AnalysisStep({ onNext, onPrevious, onDataUpdate, data }: Analysi
               )}
               
               <div className="text-center py-8">
-                <Button onClick={runAnalysis} disabled={analyzing}>
-                  {analyzing ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Analyzing...
-                    </>
-                  ) : (
-                    <>
-                      <BarChart3 className="h-4 w-4 mr-2" />
-                      Start Analysis
-                    </>
+                <div className="flex items-center justify-center gap-2">
+                  <Button onClick={runAnalysis} disabled={analyzing}>
+                    {analyzing ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Analyzing...
+                      </>
+                    ) : (
+                      <>
+                        <BarChart3 className="h-4 w-4 mr-2" />
+                        Start Analysis
+                      </>
+                    )}
+                  </Button>
+                  {analyzing && (
+                    <Button 
+                      onClick={cancelAnalysis} 
+                      variant="destructive"
+                      size="sm"
+                      className="w-10 px-2"
+                    >
+                      X
+                    </Button>
                   )}
-                </Button>
+                </div>
               </div>
             </div>
           ) : (
