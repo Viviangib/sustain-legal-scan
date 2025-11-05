@@ -26,7 +26,6 @@ export function ResultsStep({ data, onStartNew, onPrevious }: ResultsStepProps) 
     // Simulate report creation (replace with actual report generation)
     await new Promise(resolve => setTimeout(resolve, 2000));
     
-    if (!isCreating) return; // Check if cancelled
     const results = data.analysisResults.results;
     const score = data.analysisResults.compliance_score;
     
