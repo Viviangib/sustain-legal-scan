@@ -122,7 +122,7 @@ export function AnalysisStep({ onNext, onPrevious, onDataUpdate, data }: Analysi
 
       toast({
         title: "Analysis complete",
-        description: "Your sustainability framework analysis is ready.",
+        description: "Generated files aren't saved. Please download them before you continue.",
       });
     } catch (error: any) {
       toast({
