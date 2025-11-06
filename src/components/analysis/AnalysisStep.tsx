@@ -301,7 +301,7 @@ export function AnalysisStep({ onNext, onPrevious, onDataUpdate, data }: Analysi
                   </svg>
                 </div>
                 <h3 className="text-lg font-semibold mb-2">Analysis Complete</h3>
-                <p className="text-muted-foreground">Your sustainability framework analysis has been completed successfully.</p>
+                <p className="text-muted-foreground">Generated files aren't saved. Please download them before you continue.</p>
               </div>
               
               {/* Download button for indicator analysis */}
