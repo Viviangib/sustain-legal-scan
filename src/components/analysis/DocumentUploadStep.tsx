@@ -177,8 +177,13 @@ export function DocumentUploadStep({ onNext, onPrevious, onDataUpdate, data }: D
 
     if (uploadMode === 'excel') {
       await parseExcelFile(file);
-    } else {
-      await extractFromDocument(file);
+    }
+    // For PDF/Word, wait for user to click "Start extraction"
+  };
+
+  const handleStartExtraction = async () => {
+    if (selectedFile) {
+      await extractFromDocument(selectedFile);
     }
   };
 
@@ -503,6 +508,16 @@ export function DocumentUploadStep({ onNext, onPrevious, onDataUpdate, data }: D
                 </Button>
               </div>
             </div>
+          )}
+
+          {/* Start Extraction Button - only for PDF/Word mode */}
+          {uploadMode === 'pdf-word' && selectedFile && indicators.length === 0 && !isExtracting && (
+            <Button 
+              onClick={handleStartExtraction} 
+              className="w-full"
+            >
+              Start Extraction
+            </Button>
           )}
 
           {/* Dropzone */}
