@@ -174,6 +174,7 @@ export function DocumentUploadStep({ onNext, onPrevious, onDataUpdate, data }: D
     setSelectedFile(file);
     setValidationError('');
     setHasUnsavedEdits(false);
+    setIndicators([]); // Reset indicators when new file is selected
 
     if (uploadMode === 'excel') {
       await parseExcelFile(file);
