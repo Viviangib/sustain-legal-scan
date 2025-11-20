@@ -30,6 +30,12 @@ export type AnalysisData = {
   supportingDocuments: any[];
   legalFramework: any;
   analysisResults: any;
+  indicators?: any[];
+  step2FileInfo?: {
+    fileName: string;
+    fileSize: number;
+    uploadMode: 'excel' | 'pdf-word';
+  };
 };
 
 const steps = [
