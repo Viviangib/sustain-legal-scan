@@ -645,19 +645,6 @@ export function DocumentUploadStep({ onNext, onPrevious, onDataUpdate, data }: D
         </CardContent>
       </Card>
 
-      {/* Unified Preview Table */}
-      {indicators.length > 0 && (
-        <UnifiedPreviewTable
-          indicators={indicators}
-          isExtracting={isExtracting}
-          onEdit={handleEdit}
-          onDownload={handleDownload}
-          onNext={handleUseIndicators}
-          validationIssues={validationIssues}
-          hasUnsavedEdits={hasUnsavedEdits}
-        />
-      )}
-
       {/* Sticky Footer */}
       <div className="sticky bottom-0 bg-background border-t p-4 flex items-center justify-between">
         <Button onClick={onPrevious} variant="outline">
