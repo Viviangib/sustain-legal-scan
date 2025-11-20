@@ -597,12 +597,14 @@ export function DocumentUploadStep({ onNext, onPrevious, onDataUpdate, data }: D
 
           {/* Start Extraction Button - only for PDF/Word mode */}
           {uploadMode === 'pdf-word' && selectedFile && indicators.length === 0 && !isExtracting && (
-            <Button 
-              onClick={handleStartExtraction} 
-              className="w-full"
-            >
-              Start Extraction
-            </Button>
+            <div className="flex justify-end">
+              <Button 
+                onClick={handleStartExtraction} 
+                className="w-64"
+              >
+                Start Extraction
+              </Button>
+            </div>
           )}
 
           {/* Dropzone */}
