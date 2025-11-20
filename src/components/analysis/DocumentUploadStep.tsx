@@ -52,10 +52,10 @@ type ExtractionStep = {
 };
 
 export function DocumentUploadStep({ onNext, onPrevious, onDataUpdate, data }: DocumentUploadStepProps) {
-  const [uploadMode, setUploadMode] = useState<UploadMode>('excel');
+  const [uploadMode, setUploadMode] = useState<UploadMode>(data.step2FileInfo?.uploadMode || 'excel');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [validationError, setValidationError] = useState<string>('');
-  const [indicators, setIndicators] = useState<NormalizedIndicator[]>([]);
+  const [indicators, setIndicators] = useState<NormalizedIndicator[]>(data.indicators || []);
   const [validationIssues, setValidationIssues] = useState<ValidationIssue[]>([]);
   const [hasUnsavedEdits, setHasUnsavedEdits] = useState(false);
   
@@ -77,6 +77,23 @@ export function DocumentUploadStep({ onNext, onPrevious, onDataUpdate, data }: D
 
   const { user } = useAuth();
   const { toast } = useToast();
+
+  // Restore file info when coming back to this step
+  useEffect(() => {
+    if (data.step2FileInfo && !selectedFile) {
+      // Create a mock file object to represent the previously uploaded file
+      const mockFile = new File([], data.step2FileInfo.fileName, { type: 'application/octet-stream' });
+      Object.defineProperty(mockFile, 'size', { value: data.step2FileInfo.fileSize });
+      setSelectedFile(mockFile);
+    }
+  }, []);
+
+  // Persist indicators to parent whenever they change
+  useEffect(() => {
+    if (indicators.length > 0) {
+      onDataUpdate({ indicators });
+    }
+  }, [indicators]);
 
   // Timer for extraction
   useEffect(() => {
@@ -175,6 +192,16 @@ export function DocumentUploadStep({ onNext, onPrevious, onDataUpdate, data }: D
     setValidationError('');
     setHasUnsavedEdits(false);
     setIndicators([]); // Reset indicators when new file is selected
+
+    // Save file info to parent state
+    onDataUpdate({
+      step2FileInfo: {
+        fileName: file.name,
+        fileSize: file.size,
+        uploadMode
+      },
+      indicators: []
+    });
 
     if (uploadMode === 'excel') {
       await parseExcelFile(file);
