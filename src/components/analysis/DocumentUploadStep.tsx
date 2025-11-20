@@ -569,6 +569,27 @@ export function DocumentUploadStep({ onNext, onPrevious, onDataUpdate, data }: D
             </Button>
           )}
 
+          {/* Download Extracted Indicators - only for PDF/Word mode after extraction */}
+          {uploadMode === 'pdf-word' && indicators.length > 0 && (
+            <Alert>
+              <Info className="h-4 w-4" />
+              <AlertDescription>
+                <div className="flex items-center justify-between">
+                  <span>
+                    <strong>Extraction Complete:</strong> {indicators.length} indicator{indicators.length !== 1 ? 's' : ''} extracted successfully.
+                  </span>
+                  <Button 
+                    onClick={handleDownload} 
+                    variant="outline"
+                    size="sm"
+                  >
+                    Download Excel
+                  </Button>
+                </div>
+              </AlertDescription>
+            </Alert>
+          )}
+
           {/* Dropzone */}
           {!selectedFile && !isExtracting && (
             <div className="space-y-4">
