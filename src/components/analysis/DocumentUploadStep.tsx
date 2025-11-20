@@ -560,7 +560,7 @@ export function DocumentUploadStep({ onNext, onPrevious, onDataUpdate, data }: D
           )}
 
           {/* Extracted Indicators Card - shown after PDF/Word extraction */}
-          {uploadMode === 'pdf-word' && selectedFile && indicators.length > 0 && data.step2FileInfo?.uploadMode === 'pdf-word' && (
+          {uploadMode === 'pdf-word' && selectedFile && indicators.length > 0 && (
             <Card className="bg-success/5 border-success">
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
