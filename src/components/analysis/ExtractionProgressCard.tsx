@@ -11,20 +11,23 @@ export function ExtractionProgressCard({
 }: ExtractionProgressCardProps) {
   return (
     <Card>
-      <CardContent className="pt-6 space-y-4">
-        <div className="flex items-center gap-3">
-          <Loader2 className="h-5 w-5 text-primary animate-spin" />
-          <span className="text-sm font-medium">Processing your documents</span>
+      <CardContent className="pt-6">
+        <div className="text-center py-8">
+          <div className="flex items-center justify-center gap-2">
+            <Button disabled>
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              Extracting...
+            </Button>
+            <Button 
+              onClick={onCancel} 
+              variant="destructive"
+              size="sm"
+              className="w-10 px-2"
+            >
+              X
+            </Button>
+          </div>
         </div>
-        
-        <Button 
-          variant="destructive" 
-          size="sm" 
-          onClick={onCancel}
-          className="w-full"
-        >
-          Cancel
-        </Button>
       </CardContent>
     </Card>
   );
