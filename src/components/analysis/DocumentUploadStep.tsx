@@ -599,8 +599,7 @@ export function DocumentUploadStep({ onNext, onPrevious, onDataUpdate, data }: D
           {uploadMode === 'pdf-word' && selectedFile && indicators.length === 0 && !isExtracting && (
             <div className="flex justify-end">
               <Button 
-                onClick={handleStartExtraction} 
-                className="w-64"
+                onClick={handleStartExtraction}
               >
                 Start Extraction
               </Button>
