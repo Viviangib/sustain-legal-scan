@@ -6,10 +6,9 @@ import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
-import { Upload, FileSpreadsheet, FileText, AlertCircle, Info } from 'lucide-react';
+import { Upload, FileSpreadsheet, FileText, AlertCircle, Info, Loader2 } from 'lucide-react';
 import { AnalysisData } from '@/pages/Analysis';
 import * as XLSX from 'xlsx';
-import { ExtractionProgressCard } from './ExtractionProgressCard';
 import { UnifiedPreviewTable } from './UnifiedPreviewTable';
 import {
   AlertDialog,
@@ -511,30 +510,52 @@ export function DocumentUploadStep({ onNext, onPrevious, onDataUpdate, data }: D
 
           {/* File Chip */}
           {selectedFile && (
-            <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg border">
-              <div className="flex items-center gap-3">
-                {uploadMode === 'excel' ? (
-                  <FileSpreadsheet className="h-5 w-5 text-primary" />
-                ) : (
-                  <FileText className="h-5 w-5 text-primary" />
-                )}
-                <div>
-                  <span className="font-medium">{selectedFile.name}</span>
-                  <span className="text-muted-foreground ml-2">
-                    {(selectedFile.size / (1024 * 1024)).toFixed(2)} MB
-                  </span>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg border">
+                <div className="flex items-center gap-3">
+                  {uploadMode === 'excel' ? (
+                    <FileSpreadsheet className="h-5 w-5 text-primary" />
+                  ) : (
+                    <FileText className="h-5 w-5 text-primary" />
+                  )}
+                  <div>
+                    <span className="font-medium">{selectedFile.name}</span>
+                    <span className="text-muted-foreground ml-2">
+                      {(selectedFile.size / (1024 * 1024)).toFixed(2)} MB
+                    </span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Label htmlFor="replaceFile">
+                    <Button variant="outline" size="sm" asChild>
+                      <span>Replace</span>
+                    </Button>
+                  </Label>
+                  <Button variant="ghost" size="sm" onClick={handleReset}>
+                    Remove
+                  </Button>
                 </div>
               </div>
-              <div className="flex items-center gap-2">
-                <Label htmlFor="replaceFile">
-                  <Button variant="outline" size="sm" asChild>
-                    <span>Replace</span>
-                  </Button>
-                </Label>
-                <Button variant="ghost" size="sm" onClick={handleReset}>
-                  Remove
-                </Button>
-              </div>
+
+              {/* Extraction Progress UI - shown when extracting */}
+              {isExtracting && (
+                <div className="text-center py-6">
+                  <div className="flex items-center justify-center gap-2">
+                    <Button disabled>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Extracting...
+                    </Button>
+                    <Button 
+                      onClick={handleCancelExtraction} 
+                      variant="destructive"
+                      size="sm"
+                      className="w-10 px-2"
+                    >
+                      X
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -623,13 +644,6 @@ export function DocumentUploadStep({ onNext, onPrevious, onDataUpdate, data }: D
           />
         </CardContent>
       </Card>
-
-      {/* Extraction Progress Card */}
-      {isExtracting && (
-        <ExtractionProgressCard
-          onCancel={handleCancelExtraction}
-        />
-      )}
 
       {/* Unified Preview Table */}
       {indicators.length > 0 && (
