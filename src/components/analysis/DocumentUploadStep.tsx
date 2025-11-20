@@ -559,6 +559,40 @@ export function DocumentUploadStep({ onNext, onPrevious, onDataUpdate, data }: D
             </div>
           )}
 
+          {/* Extracted Indicators Card - shown after PDF/Word extraction */}
+          {uploadMode === 'pdf-word' && selectedFile && indicators.length > 0 && (
+            <Card className="bg-success/5 border-success">
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="h-8 w-8 rounded-full bg-success/10 flex items-center justify-center">
+                      <svg className="h-5 w-5 text-success" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                    </div>
+                    <div>
+                      <CardTitle className="text-base">Extraction Complete</CardTitle>
+                      <CardDescription className="text-sm">
+                        Successfully extracted {indicators.length} indicator{indicators.length !== 1 ? 's' : ''}
+                      </CardDescription>
+                    </div>
+                  </div>
+                  <Button 
+                    onClick={handleDownload}
+                    variant="outline"
+                    size="sm"
+                    className="gap-2"
+                  >
+                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    Download as Excel
+                  </Button>
+                </div>
+              </CardHeader>
+            </Card>
+          )}
+
           {/* Start Extraction Button - only for PDF/Word mode */}
           {uploadMode === 'pdf-word' && selectedFile && indicators.length === 0 && !isExtracting && (
             <Button 
