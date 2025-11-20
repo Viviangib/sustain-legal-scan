@@ -6,10 +6,11 @@ import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
-import { Upload, FileSpreadsheet, FileText, AlertCircle, Info, Loader2 } from 'lucide-react';
+import { Upload, FileSpreadsheet, FileText, AlertCircle, Info, Loader2, Download } from 'lucide-react';
 import { AnalysisData } from '@/pages/Analysis';
 import * as XLSX from 'xlsx';
 import { UnifiedPreviewTable } from './UnifiedPreviewTable';
+import { exportIndicatorsToExcel } from '@/lib/exportIndicators';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -429,6 +430,29 @@ export function DocumentUploadStep({ onNext, onPrevious, onDataUpdate, data }: D
     });
   };
 
+  const handleDownloadIndicators = () => {
+    if (!selectedFile || indicators.length === 0) return;
+    
+    try {
+      exportIndicatorsToExcel(indicators, selectedFile.name);
+      toast({
+        title: "Download Complete",
+        description: `Downloaded ${indicators.length} indicators`,
+      });
+    } catch (error) {
+      toast({
+        title: "Download Failed",
+        description: "Failed to generate Excel file",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const isPdfOrWord = (filename: string): boolean => {
+    const extension = filename.toLowerCase().split('.').pop();
+    return extension === 'pdf' || extension === 'docx' || extension === 'doc';
+  };
+
   const handleUseIndicators = () => {
     // Check for blocking errors (empty IDs or short texts)
     const blockingIssues = validationIssues.filter(
@@ -555,6 +579,18 @@ export function DocumentUploadStep({ onNext, onPrevious, onDataUpdate, data }: D
                     </Button>
                   </div>
                 </div>
+              )}
+
+              {/* Download Button - shown after successful extraction from PDF/Word */}
+              {selectedFile && isPdfOrWord(selectedFile.name) && indicators.length > 0 && !isExtracting && (
+                <Button 
+                  onClick={handleDownloadIndicators} 
+                  variant="outline"
+                  className="w-full"
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Download Indicators as Excel
+                </Button>
               )}
             </div>
           )}
