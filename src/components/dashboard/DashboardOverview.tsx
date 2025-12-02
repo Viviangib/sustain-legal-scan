@@ -8,6 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import * as XLSX from 'xlsx';
+import { generateUserManual } from '@/lib/generateUserManual';
 import { 
   FileText, 
   BarChart3, 
@@ -22,7 +23,8 @@ import {
   Eye,
   ExternalLink,
   Sheet,
-  FileType
+  FileType,
+  BookOpen
 } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -525,6 +527,31 @@ Report generated on ${new Date().toLocaleString()}
               </div>
             </div>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Help & Resources */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Help & Resources</CardTitle>
+          <CardDescription>
+            Get guidance on how to use the Sustainability Benchmarking Tool
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Button 
+            variant="outline" 
+            onClick={() => {
+              generateUserManual();
+              toast({
+                title: "Generating User Manual",
+                description: "Your user manual will download shortly.",
+              });
+            }}
+          >
+            <BookOpen className="h-4 w-4 mr-2" />
+            Download User Manual (Word)
+          </Button>
         </CardContent>
       </Card>
 
