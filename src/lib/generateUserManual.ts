@@ -77,7 +77,8 @@ export async function generateUserManual(): Promise<void> {
           new Paragraph({ text: "6. Downloading Reports", spacing: { after: 100 } }),
           new Paragraph({ text: "7. Managing Previous Analyses", spacing: { after: 100 } }),
           new Paragraph({ text: "8. Troubleshooting", spacing: { after: 100 } }),
-          new Paragraph({ text: "9. Contact & Support", spacing: { after: 400 } }),
+          new Paragraph({ text: "9. Frequently Asked Questions (FAQ)", spacing: { after: 100 } }),
+          new Paragraph({ text: "10. Contact & Support", spacing: { after: 400 } }),
 
           // Section 1: Introduction
           new Paragraph({
@@ -965,9 +966,156 @@ export async function generateUserManual(): Promise<void> {
             spacing: { after: 400 },
           }),
 
-          // Section 9: Contact & Support
+          // Section 9: Frequently Asked Questions (FAQ)
           new Paragraph({
-            text: "9. Contact & Support",
+            text: "9. Frequently Asked Questions (FAQ)",
+            heading: HeadingLevel.HEADING_1,
+            spacing: { before: 400, after: 200 },
+          }),
+
+          // FAQ 1
+          new Paragraph({
+            children: [
+              new TextRun({ text: "Q: What file formats are supported for uploading sustainability indicators?", bold: true }),
+            ],
+            spacing: { after: 100 },
+          }),
+          new Paragraph({
+            children: [
+              new TextRun({ text: "A: The tool supports Excel files (.xlsx, .xls), CSV files, PDF documents, and Word documents (.docx, .doc). For structured data, Excel/CSV is recommended. For unstructured documents, the AI extraction feature can parse PDF and Word files." }),
+            ],
+            spacing: { after: 200 },
+          }),
+
+          // FAQ 2
+          new Paragraph({
+            children: [
+              new TextRun({ text: "Q: How long does the AI analysis take?", bold: true }),
+            ],
+            spacing: { after: 100 },
+          }),
+          new Paragraph({
+            children: [
+              new TextRun({ text: "A: Analysis time depends on the number of indicators and the complexity of the legal frameworks selected. Typically, an analysis with 50-100 indicators takes 5-10 minutes. Larger datasets may take longer. Please keep your browser tab open during analysis." }),
+            ],
+            spacing: { after: 200 },
+          }),
+
+          // FAQ 3
+          new Paragraph({
+            children: [
+              new TextRun({ text: "Q: Can I edit indicators after uploading them?", bold: true }),
+            ],
+            spacing: { after: 100 },
+          }),
+          new Paragraph({
+            children: [
+              new TextRun({ text: "A: Yes, you can edit indicators directly in the preview table after upload. Click on any cell to modify its content. You can also download the indicators as Excel, make edits offline, and re-upload the modified file." }),
+            ],
+            spacing: { after: 200 },
+          }),
+
+          // FAQ 4
+          new Paragraph({
+            children: [
+              new TextRun({ text: "Q: What legal frameworks can I benchmark against?", bold: true }),
+            ],
+            spacing: { after: 100 },
+          }),
+          new Paragraph({
+            children: [
+              new TextRun({ text: "A: The tool currently supports EUDR (EU Deforestation Regulation), CS3D (Corporate Sustainability Due Diligence Directive), CSRD (Corporate Sustainability Reporting Directive), and EU Taxonomy. You can select one or multiple frameworks for comparison." }),
+            ],
+            spacing: { after: 200 },
+          }),
+
+          // FAQ 5
+          new Paragraph({
+            children: [
+              new TextRun({ text: "Q: How is the compliance score calculated?", bold: true }),
+            ],
+            spacing: { after: 100 },
+          }),
+          new Paragraph({
+            children: [
+              new TextRun({ text: "A: The compliance score is calculated using AI analysis that compares your sustainability indicators against the requirements of the selected legal frameworks. Scores of 80% and above indicate strong alignment, 50-79% indicates partial compliance, and below 50% suggests significant gaps that need attention." }),
+            ],
+            spacing: { after: 200 },
+          }),
+
+          // FAQ 6
+          new Paragraph({
+            children: [
+              new TextRun({ text: "Q: Can I download and share the analysis results?", bold: true }),
+            ],
+            spacing: { after: 100 },
+          }),
+          new Paragraph({
+            children: [
+              new TextRun({ text: "A: Yes, you can download results in multiple formats including Excel reports with detailed indicator mappings and Word documents with summary reports. These can be shared with stakeholders or used for compliance documentation." }),
+            ],
+            spacing: { after: 200 },
+          }),
+
+          // FAQ 7
+          new Paragraph({
+            children: [
+              new TextRun({ text: "Q: What happens if the AI extraction misses some indicators?", bold: true }),
+            ],
+            spacing: { after: 100 },
+          }),
+          new Paragraph({
+            children: [
+              new TextRun({ text: "A: AI extraction works best with well-structured documents. If indicators are missed, you can manually add them in the preview table or prepare an Excel file with all indicators. Complex layouts, scanned images without OCR, or unusual formatting may affect extraction accuracy." }),
+            ],
+            spacing: { after: 200 },
+          }),
+
+          // FAQ 8
+          new Paragraph({
+            children: [
+              new TextRun({ text: "Q: Is my data secure?", bold: true }),
+            ],
+            spacing: { after: 100 },
+          }),
+          new Paragraph({
+            children: [
+              new TextRun({ text: "A: Yes, all uploaded documents and analysis data are stored securely and associated with your user account. Only you can access your analyses. Data is transmitted over encrypted connections (HTTPS) and stored in secure cloud infrastructure." }),
+            ],
+            spacing: { after: 200 },
+          }),
+
+          // FAQ 9
+          new Paragraph({
+            children: [
+              new TextRun({ text: "Q: Can I re-run an analysis with different legal frameworks?", bold: true }),
+            ],
+            spacing: { after: 100 },
+          }),
+          new Paragraph({
+            children: [
+              new TextRun({ text: "A: Yes, you can create a new analysis using the same sustainability indicators and select different legal frameworks. Your previous analyses are saved and can be accessed from the \"All Analyses\" page for comparison." }),
+            ],
+            spacing: { after: 200 },
+          }),
+
+          // FAQ 10
+          new Paragraph({
+            children: [
+              new TextRun({ text: "Q: What should I do if the analysis fails or gets stuck?", bold: true }),
+            ],
+            spacing: { after: 100 },
+          }),
+          new Paragraph({
+            children: [
+              new TextRun({ text: "A: If analysis fails, try refreshing the page and restarting. Ensure you have a stable internet connection and your indicators are properly formatted. If issues persist, try reducing the number of indicators or contact support for assistance." }),
+            ],
+            spacing: { after: 400 },
+          }),
+
+          // Section 10: Contact & Support
+          new Paragraph({
+            text: "10. Contact & Support",
             heading: HeadingLevel.HEADING_1,
             spacing: { before: 400, after: 200 },
           }),
